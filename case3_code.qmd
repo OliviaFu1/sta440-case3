@@ -8,6 +8,7 @@ editor: visual
 
 ```{r}
 library(tidyverse)
+library(ggplot2)
 load("./emsData.RData")
 ```
 
@@ -30,5 +31,13 @@ x |>
 x <- x |>
   mutate(shortestTime = min(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce))
 ```
+
+```{r}
+ggplot(x,aes(x=REF.GRID, y= dispToClearTime))+geom_histogram(stat= "identity",position="dodge")
+
+ggplot(x,aes(x=dispToClearTime,y=toHospitalTT,color=REF.GRID))+geom_point()
+```
+
+
 
 ## Model
