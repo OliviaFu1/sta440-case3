@@ -44,7 +44,13 @@ x |>
 ```{r}
 ggplot(x,aes(x=REF.GRID, y= dispToClearTime))+geom_histogram(stat= "identity",position="dodge")
 
-ggplot(x,aes(x=dispToClearTime,y=toHospitalTT,color=REF.GRID))+geom_point()
+
+# difference in travel time (station to scene vs. scene to hospital)
+ggplot(x,aes(x=observedTT,y=toHospitalTT,color=REF.GRID))+geom_point()+geom_smooth()
+
+#difference in travel time ()
+ggplot(x,aes(x=observedTT,y=toHospitalTT,color=REF.GRID))+geom_point()+geom_smooth()
+
 ```
 
 
