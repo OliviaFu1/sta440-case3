@@ -135,10 +135,34 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> x <span class="sc">|&gt;</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">shortestTime =</span> <span class="fu">min</span>(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">travelTime =</span> DT.ARRIVE <span class="sc">-</span> DT.ENROUTE,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">shortestTime =</span> <span class="fu">pmin</span>(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>x <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> travelTime <span class="sc">-</span> shortestTime) <span class="sc">|&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(REF.GRID <span class="sc">==</span> <span class="st">"1 North"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> diff)) <span class="sc">+</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>() <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Don't know how to automatically pick scale for object of type &lt;difftime&gt;.
+Defaulting to continuous.
+`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 2 rows containing non-finite outside the scale range
+(`stat_bin()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="case3_code_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>REF.GRID, <span class="at">y=</span> dispToClearTime))<span class="sc">+</span><span class="fu">geom_histogram</span>(<span class="at">stat=</span> <span class="st">"identity"</span>,<span class="at">position=</span><span class="st">"dodge"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>REF.GRID, <span class="at">y=</span> dispToClearTime))<span class="sc">+</span><span class="fu">geom_histogram</span>(<span class="at">stat=</span> <span class="st">"identity"</span>,<span class="at">position=</span><span class="st">"dodge"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning in geom_histogram(stat = "identity", position = "dodge"): Ignoring
 unknown parameters: `binwidth`, `bins`, and `pad`</code></pre>
@@ -154,8 +178,8 @@ Defaulting to continuous.</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># difference in travel time (station to scene vs. scene to hospital)</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>observedTT,<span class="at">y=</span>toHospitalTT,<span class="at">color=</span>REF.GRID))<span class="sc">+</span><span class="fu">geom_point</span>()<span class="sc">+</span><span class="fu">geom_smooth</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># difference in travel time (station to scene vs. scene to hospital)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>observedTT,<span class="at">y=</span>toHospitalTT,<span class="at">color=</span>REF.GRID))<span class="sc">+</span><span class="fu">geom_point</span>()<span class="sc">+</span><span class="fu">geom_smooth</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Don't know how to automatically pick scale for object of type &lt;difftime&gt;.
 Defaulting to continuous.
@@ -178,8 +202,8 @@ Defaulting to continuous.
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#difference in travel time ()</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>atHospitalDur,<span class="at">y=</span>REF.GRID,<span class="at">color=</span>DISPATCH.PRIORITY.NAME))<span class="sc">+</span><span class="fu">geom_boxplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#difference in travel time ()</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>atHospitalDur,<span class="at">y=</span>REF.GRID,<span class="at">color=</span>DISPATCH.PRIORITY.NAME))<span class="sc">+</span><span class="fu">geom_boxplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Don't know how to automatically pick scale for object of type &lt;difftime&gt;.
 Defaulting to continuous.</code></pre>
@@ -195,6 +219,33 @@ Defaulting to continuous.</code></pre>
 </figure>
 </div>
 </div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(x,<span class="fu">aes</span>(<span class="at">x=</span>observedTT,<span class="at">y=</span>REF.GRID,<span class="at">color=</span>DISPATCH.PRIORITY.NAME))<span class="sc">+</span><span class="fu">geom_boxplot</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Don't know how to automatically pick scale for object of type &lt;difftime&gt;.
+Defaulting to continuous.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 16 rows containing non-finite outside the scale range
+(`stat_boxplot()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="case3_code_files/figure-html/unnamed-chunk-4-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Case S3</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>times_A <span class="ot">&lt;-</span> x[, <span class="fu">c</span>(<span class="st">"eTT.UA.So"</span>, <span class="st">"eTT.UA.Ce"</span>, <span class="st">"eTT.UA.NN"</span>)]</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>x<span class="sc">$</span>min_time_A <span class="ot">&lt;-</span> <span class="fu">do.call</span>(pmin, <span class="fu">c</span>(times_A, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>x<span class="sc">$</span>min_station_A <span class="ot">&lt;-</span> <span class="fu">colnames</span>(times_A)[<span class="fu">max.col</span>(<span class="sc">-</span><span class="fu">as.matrix</span>(times_A), <span class="at">ties.method =</span> <span class="st">"first"</span>)]</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Case S4</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>times_B <span class="ot">&lt;-</span> x[, <span class="fu">c</span>(<span class="st">"eTT.UA.So"</span>, <span class="st">"eTT.UA.Ce"</span>, <span class="st">"eTT.UA.FN"</span>)]</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>x<span class="sc">$</span>min_time_B <span class="ot">&lt;-</span> <span class="fu">do.call</span>(pmin, <span class="fu">c</span>(times_B, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>x<span class="sc">$</span>min_station_B <span class="ot">&lt;-</span> <span class="fu">colnames</span>(times_B)[<span class="fu">max.col</span>(<span class="sc">-</span><span class="fu">as.matrix</span>(times_B), <span class="at">ties.method =</span> <span class="st">"first"</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="model" class="level2">

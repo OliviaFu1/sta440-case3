@@ -50,6 +50,7 @@ ggplot(x,aes(x=observedTT,y=toHospitalTT,color=REF.GRID))+geom_point()+geom_smoo
 
 #difference in travel time ()
 ggplot(x,aes(x=atHospitalDur,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot()
+ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot()
 
 ```
 
