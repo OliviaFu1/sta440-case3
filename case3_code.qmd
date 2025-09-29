@@ -4,33 +4,36 @@ format: html
 editor: visual
 ---
 
-## Data Processing
+# Data
 
 ```{r}
 library(tidyverse)
 library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+```{r}
 load("./emsData.RData")
 ```
 
-## EDA
+# EDA
+
+## Problem in North
 
 ```{r}
-#| warning: false
-#| message: false
-
 x |>
-  mutate(anstime = DT.ARRIVE - DT.ENROUTE) |>
-  ggplot(aes(x = anstime)) +
+  mutate(travelTime = DT.ARRIVE - DT.ENROUTE) |>
+  ggplot(aes(x = travelTime)) +
   facet_wrap(~REF.GRID) +
   geom_histogram(bins = 25) +
   theme_minimal()
-
 ```
 
 ```{r}
 x <- x |>
   mutate(travelTime = DT.ARRIVE - DT.ENROUTE,
-    shortestTime = pmin(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce, na.rm = TRUE))
+         shortestTime = pmin(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce, na.rm = TRUE))
 
 x |>
   mutate(diff = travelTime - shortestTime) |>
@@ -38,7 +41,6 @@ x |>
   ggplot(aes(x = diff)) +
   geom_histogram() +
   theme_minimal()
-
 ```
 
 ```{r}
@@ -54,16 +56,67 @@ ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot
 
 ```
 
-```{r}
-# Case S3
-times_A <- x[, c("eTT.UA.So", "eTT.UA.Ce", "eTT.UA.NN")]
-x$min_time_A <- do.call(pmin, c(times_A, na.rm = TRUE))
-x$min_station_A <- colnames(times_A)[max.col(-as.matrix(times_A), ties.method = "first")]
+## Actual vs. Estimated
 
-# Case S4
-times_B <- x[, c("eTT.UA.So", "eTT.UA.Ce", "eTT.UA.FN")]
-x$min_time_B <- do.call(pmin, c(times_B, na.rm = TRUE))
-x$min_station_B <- colnames(times_B)[max.col(-as.matrix(times_B), ties.method = "first")]
+```{r}
+x <- x |>
+  mutate(
+    est_time = case_when(
+      BASE.NAME == "Company 1" ~ eTT.UA.So,
+      BASE.NAME == "Company 9" ~ eTT.UA.Ce,
+      TRUE ~ NA_real_
+    ),
+    actual_time = as.numeric(difftime(DT.ARRIVE, DT.DISP, units = "secs"))
+  )
+
+ggplot(x, aes(x = est_time, y = actual_time, color = BASE.NAME)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Actual vs. Google Estimated Travel Times",
+    x = "Estimated travel time (seconds)",
+    y = "Actual travel time (seconds)",
+    color = "Base"
+  ) +
+  theme_minimal()
 ```
 
-## Model
+## Comparing scenarios
+
+```{r}
+# S0: Central + South
+x$S0 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, na.rm = TRUE)
+
+# S1: Central + Near North
+x$S1 <- pmin(x$eTT.UA.Ce, x$eTT.UA.NN, na.rm = TRUE)
+
+# S2: Central + Far North
+x$S2 <- pmin(x$eTT.UA.Ce, x$eTT.UA.FN, na.rm = TRUE)
+
+# S3: Central + South + Near North
+x$S3 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.NN, na.rm = TRUE)
+
+# S4: Central + South + Far North
+x$S4 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.FN, na.rm = TRUE)
+```
+
+```{r}
+shortest_ett <- x |>
+  select(S0, S1, S2, S3, S4, actual_time) |>
+  pivot_longer(
+    cols = everything(),
+    names_to = "scenario",
+    values_to = "time"
+  )
+
+ggplot(shortest_ett, aes(x = time)) +
+  geom_histogram(position = "identity", bins = 50) +
+  labs(
+    title = "Shortest Travel Time Distributions by Scenario",
+    x = "Travel time (seconds)",
+    y = "Count",
+    fill = "Scenario"
+  ) +
+  theme_minimal() +
+  facet_wrap(~scenario)
+```
