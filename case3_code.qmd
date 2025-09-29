@@ -7,9 +7,28 @@ editor: visual
 ## Data Processing
 
 ```{r}
+library(tidyverse)
 load("./emsData.RData")
 ```
 
 ## EDA
+
+```{r}
+#| warning: false
+#| message: false
+
+x |>
+  mutate(anstime = DT.ARRIVE - DT.ENROUTE) |>
+  ggplot(aes(x = anstime)) +
+  facet_wrap(~REF.GRID) +
+  geom_histogram(bins = 25) +
+  theme_minimal()
+
+```
+
+```{r}
+x <- x |>
+  mutate(shortestTime = min(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce))
+```
 
 ## Model
