@@ -1,0 +1,15 @@
+---
+title: "case3_code"
+format: html
+editor: visual
+---
+
+## Data Processing
+
+```{r}
+load("./emsData.RData")
+```
+
+## EDA
+
+## Model
