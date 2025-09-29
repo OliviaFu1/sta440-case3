@@ -49,7 +49,7 @@ ggplot(x,aes(x=REF.GRID, y= dispToClearTime))+geom_histogram(stat= "identity",po
 ggplot(x,aes(x=observedTT,y=toHospitalTT,color=REF.GRID))+geom_point()+geom_smooth()
 
 #difference in travel time ()
-ggplot(x,aes(x=observedTT,y=toHospitalTT,color=REF.GRID))+geom_point()+geom_smooth()
+ggplot(x,aes(x=atHospitalDur,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot()
 
 ```
 
