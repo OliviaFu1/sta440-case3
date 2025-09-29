@@ -29,7 +29,16 @@ x |>
 
 ```{r}
 x <- x |>
-  mutate(shortestTime = min(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce))
+  mutate(travelTime = DT.ARRIVE - DT.ENROUTE,
+    shortestTime = pmin(eTT.UA.NN, eTT.UA.FN, eTT.UA.So, eTT.UA.Ce, na.rm = TRUE))
+
+x |>
+  mutate(diff = travelTime - shortestTime) |>
+  filter(REF.GRID == "1 North") |>
+  ggplot(aes(x = diff)) +
+  geom_histogram() +
+  theme_minimal()
+
 ```
 
 ```{r}
