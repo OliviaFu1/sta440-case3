@@ -53,6 +53,16 @@ ggplot(x,aes(x=atHospitalDur,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxp
 
 ```
 
+```{r}
+# Case S3
+times_A <- x[, c("eTT.UA.So", "eTT.UA.Ce", "eTT.UA.NN")]
+x$min_time_A <- do.call(pmin, c(times_A, na.rm = TRUE))
+x$min_station_A <- colnames(times_A)[max.col(-as.matrix(times_A), ties.method = "first")]
 
+# Case S4
+times_B <- x[, c("eTT.UA.So", "eTT.UA.Ce", "eTT.UA.FN")]
+x$min_time_B <- do.call(pmin, c(times_B, na.rm = TRUE))
+x$min_station_B <- colnames(times_B)[max.col(-as.matrix(times_B), ties.method = "first")]
+```
 
 ## Model
