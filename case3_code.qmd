@@ -19,6 +19,13 @@ load("./emsData.RData")
 
 # EDA
 
+```{r}
+# remove duplicated entries of the same call
+# 5 duplicates
+x <- x |>
+  distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
+```
+
 ## Problem in North
 
 ```{r}
@@ -61,22 +68,79 @@ ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot
 ```{r}
 x <- x |>
   mutate(
-    est_time = case_when(
+    # actual observed time
+    actual_time = as.numeric(difftime(DT.ARRIVE, DT.DISP, units = "secs")),
+
+    # pick the correct estimate from each provider
+    est_UA = case_when(
       BASE.NAME == "Company 1" ~ eTT.UA.So,
       BASE.NAME == "Company 9" ~ eTT.UA.Ce,
       TRUE ~ NA_real_
     ),
-    actual_time = as.numeric(difftime(DT.ARRIVE, DT.DISP, units = "secs"))
+    est_Pe = case_when(
+      BASE.NAME == "Company 1" ~ eTT.Pe.So,
+      BASE.NAME == "Company 9" ~ eTT.Pe.Ce,
+      TRUE ~ NA_real_
+    ),
+    est_Op = case_when(
+      BASE.NAME == "Company 1" ~ eTT.Op.So,
+      BASE.NAME == "Company 9" ~ eTT.Op.Ce,
+      TRUE ~ NA_real_
+    ),
+    est_BG = case_when(
+      BASE.NAME == "Company 1" ~ eTT.BG.So,
+      BASE.NAME == "Company 9" ~ eTT.BG.Ce,
+      TRUE ~ NA_real_
+    )
+  )
+```
+
+```{r}
+act_est <- x |>
+  select(actual_time, est_UA, est_Pe, est_Op, est_BG, BASE.NAME) |>
+  pivot_longer(
+    cols = starts_with("est_"),
+    names_to = "Estimator",
+    values_to = "est_time"
+  )
+```
+
+```{r}
+metrics <- act_est |>
+  group_by(Estimator) |>
+  summarise(
+    MAE  = mean(abs(actual_time - est_time), na.rm = TRUE),
+    RMSE = sqrt(mean((actual_time - est_time)^2, na.rm = TRUE)),
+    Bias = mean(actual_time - est_time, na.rm = TRUE)
   )
 
-ggplot(x, aes(x = est_time, y = actual_time, color = BASE.NAME)) +
-  geom_point(alpha = 0.5) +
+metrics
+```
+
+```{r}
+ggplot(act_est, aes(x = est_time, y = actual_time, color = BASE.NAME)) +
+  geom_point(alpha = 0.4) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  facet_wrap(~ Estimator) +
   labs(
-    title = "Actual vs. Google Estimated Travel Times",
+    title = "Actual vs. Estimated Travel Times",
     x = "Estimated travel time (seconds)",
-    y = "Actual travel time (seconds)",
-    color = "Base"
+    y = "Actual travel time (seconds)"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+act_est <- act_est |>
+  mutate(error = actual_time - est_time)
+
+ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Error Distribution by Estimator",
+    y = "Error (seconds, actual − estimated)",
+    x = "Estimator"
   ) +
   theme_minimal()
 ```
@@ -101,6 +165,8 @@ x$S4 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.FN, na.rm = TRUE)
 ```
 
 ```{r}
+# shortest ETT regardless of system load
+
 shortest_ett <- x |>
   select(S0, S1, S2, S3, S4, actual_time) |>
   pivot_longer(
@@ -119,4 +185,10 @@ ggplot(shortest_ett, aes(x = time)) +
   ) +
   theme_minimal() +
   facet_wrap(~scenario)
+```
+
+### Consider System load (dispatch rule)
+
+```{r}
+
 ```
