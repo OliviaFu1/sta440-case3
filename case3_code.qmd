@@ -339,3 +339,31 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
     plot.title = element_text(face = "bold", hjust = 0.5)
   )
 ```
+
+
+## Mapping Plots
+```{r}
+library(sf)
+library(ggplot2)
+library (dplyr)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(tigris)
+library(leaflet)
+        
+ggplot(x,aes(x=REF.GPS.LON,y=REF.GPS.LAT))+geom_point(color="blue",size=3)+
+theme_minimal()+
+  coord_fixed()
+
+sf_vals<- st_as_sf(x,coords= c("REF.GPS.LON","REF.GPS.LAT"),crs=4326)
+
+plot(sf_vals["observedTT"])
+
+leaflet(x) |> 
+  addTiles() |> 
+  addCircleMarkers(~REF.GPS.LON, ~REF.GPS.LAT, popup = ~as.character(REF.GPS.LON))
+
+
+
+```
+
