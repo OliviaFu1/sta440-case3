@@ -11,6 +11,8 @@ library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(knitr)
+library(kableExtra)
 ```
 
 ```{r}
@@ -114,7 +116,8 @@ metrics <- act_est |>
     Bias = mean(actual_time - est_time, na.rm = TRUE)
   )
 
-metrics
+kable(metrics, digits = 3) |>
+  kable_styling(full_width = FALSE, bootstrap_options = "condensed")
 ```
 
 ```{r}
@@ -134,15 +137,18 @@ ggplot(act_est, aes(x = est_time, y = actual_time, color = BASE.NAME)) +
 act_est <- act_est |>
   mutate(error = actual_time - est_time)
 
-ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
-  geom_boxplot() +
+ggplot(act_est, aes(x = Estimator, y = error)) +
+  geom_boxplot(width = 0.5, outlier.alpha = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  coord_cartesian(ylim = c(-500, 500)) +
   labs(
     title = "Error Distribution by Estimator",
-    y = "Error (seconds, actual − estimated)",
+    y = "Error (actual − estimated)",
     x = "Estimator"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14) +
+  theme(legend.position = "none",
+        plot.title = element_text(face = "bold", hjust = 0.5))
 ```
 
 ## Comparing scenarios
@@ -314,8 +320,8 @@ counts$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
 ggplot(counts, aes(x = DelayGroup, y = N, fill = Scenario)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Counts of Dispatch Delays by Scenario",
-       x = "Delay Interval", y = "Number of Calls",
+  labs(title = "Distribution of Dispatch Travel Times by Scenario",
+       x = "Travel Times", y = "Number of Calls",
        fill = "Scenario") +
   theme_minimal(base_size = 14) +
   theme(
@@ -340,8 +346,8 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
   )
 ```
 
-
 ## Mapping Plots
+
 ```{r}
 library(sf)
 library(ggplot2)
@@ -368,7 +374,9 @@ leaflet(x_subset) |>
 
 
 ```
+
 ## Static Map Plot
+
 ```{r}
 
 library(dplyr)
@@ -403,7 +411,9 @@ plot_save <- ggplot() +
 ggsave("vance_county_ems_observedtravel.png", plot_save, width = 7, height = 7, dpi = 300)
 
 ```
+
 ## Static Map Plot Emergency/Non Emergency
+
 ```{r}
 
 
@@ -437,7 +447,7 @@ plot_save <- ggplot() +
 
 ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 300)
 ```
+
 ```{r}
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region (Counts)",x="Count",y="Region",fill="Urgency Level")
 ```
-
