@@ -346,22 +346,24 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
 library(sf)
 library(ggplot2)
 library (dplyr)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(tigris)
 library(leaflet)
+
+
+x_subset <- x|>
+  mutate(observedTT_transform = as.numeric(observedTT, units = "mins"))
+
         
-ggplot(x,aes(x=REF.GPS.LON,y=REF.GPS.LAT))+geom_point(color="blue",size=3)+
-theme_minimal()+
-  coord_fixed()
+TT_palette<-colorNumeric(
+  palette= "viridis",
+  domain= x$observedTT_transform,
+  na.color= "transparent"
+)
 
-sf_vals<- st_as_sf(x,coords= c("REF.GPS.LON","REF.GPS.LAT"),crs=4326)
 
-plot(sf_vals["observedTT"])
-
-leaflet(x) |> 
+leaflet(x_subset) |> 
   addTiles() |> 
-  addCircleMarkers(~REF.GPS.LON, ~REF.GPS.LAT, popup = ~as.character(REF.GPS.LON))
+  addCircleMarkers(~REF.GPS.LON, ~REF.GPS.LAT,
+  radius=4,stroke=FALSE,fillOpacity = 0.85, fillColor = ~TT_palette(observedTT_transform),color=~TT_palette(observedTT_transform),popup=~paste0("Observed Travel Time: ",observedTT_transform))|>addLegend("bottomright",pal=TT_palette,values= ~observedTT_transform,title="Observed Travel Time (In Minutes)")
 
 
 
