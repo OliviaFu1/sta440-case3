@@ -190,5 +190,152 @@ ggplot(shortest_ett, aes(x = time)) +
 ### Consider System load (dispatch rule)
 
 ```{r}
+# order in dispatch time
+x <- x |> arrange(DT.DISP)
 
+# build availability matrix
+avail_matrix <- outer(x$DT.DISP, x$DT.AVAILABLE, FUN = "<")
+avail_matrix[upper.tri(avail_matrix, diag = TRUE)] <- FALSE
+```
+
+```{r}
+dispatch_scenario <- function(x, avail_matrix, scenario_caps, ett_map, label) {
+  # scenario_caps: named vector of capacities, e.g. c(South=1, Central=3, NN=2)
+  # ett_map: named vector of column names in x giving ETTs for each station
+  
+  n_calls <- nrow(x)
+  used_station <- rep(NA_character_, n_calls)
+  dispatch_ett <- rep(NA_real_, n_calls)
+  
+  for (i in seq_len(n_calls)) {
+    # reset station availability for this call
+    avail_veh <- scenario_caps
+    
+    # check conflicts with earlier calls
+    conflict_cols <- which(avail_matrix[i, ])
+    if (length(conflict_cols) > 0) {
+      for (j in conflict_cols) {
+        st <- used_station[j]
+        if (!is.na(st)) {
+          avail_veh[st] <- avail_veh[st] - 1
+        }
+      }
+    }
+    
+    # choose station with shortest ETT among those with capacity left
+    min_ett <- Inf
+    best_station <- NA
+    
+    for (st in names(scenario_caps)) {
+      if (avail_veh[st] > 0) {
+        ett_val <- x[[ett_map[st]]][i]
+        if (ett_val < min_ett) {
+          min_ett <- ett_val
+          best_station <- st
+        }
+      }
+    }
+    
+    used_station[i] <- best_station
+    dispatch_ett[i] <- min_ett
+  }
+  
+  x[[paste0(label, "_station")]] <- used_station
+  x[[paste0(label, "_ETT_DISPATCH")]] <- dispatch_ett
+  return(x)
+}
+```
+
+```{r}
+# Station → ETT column mapping
+ett_map <- c(South="eTT.BG.So", Central="eTT.BG.Ce", NN="eTT.BG.NN", FN="eTT.BG.FN")
+
+# Define scenarios (capacities per station)
+S0_caps <- c(South=1, Central=3, NN=0, FN=0)
+S1_caps <- c(South=0, Central=3, NN=1, FN=0)
+S2_caps <- c(South=0, Central=3, NN=0, FN=1)
+S3_caps <- c(South=1, Central=2, NN=1, FN=0)
+S4_caps <- c(South=1, Central=2, NN=0, FN=1)
+
+# Apply
+x <- dispatch_scenario(x, avail_matrix, S0_caps, ett_map, "S0")
+x <- dispatch_scenario(x, avail_matrix, S1_caps, ett_map, "S1")
+x <- dispatch_scenario(x, avail_matrix, S2_caps, ett_map, "S2")
+x <- dispatch_scenario(x, avail_matrix, S3_caps, ett_map, "S3")
+x <- dispatch_scenario(x, avail_matrix, S4_caps, ett_map, "S4")
+```
+
+```{r}
+plot_data <- x |>
+  pivot_longer(cols = starts_with("S") & ends_with("ETT_DISPATCH"),
+               names_to = "Scenario",
+               values_to = "ETT") |>
+  mutate(ETT_min = ETT / 60)
+
+plot_data |>
+  group_by(Scenario) |>
+  summarise(mean_ETT = mean(ETT, na.rm = TRUE)) |>
+  ggplot(aes(x = Scenario, y = mean_ETT)) +
+  geom_col() +
+  labs(title = "Average Dispatch ETT per Scenario",
+       y = "Mean Dispatch Travel Time (sec)", x = "Scenario") +
+  theme_minimal()
+
+ggplot(plot_data, aes(x = ETT)) +
+  geom_histogram(bins = 30) +
+  facet_wrap(~ Scenario) +
+  labs(title = "Histogram of Dispatch ETT by Scenario",
+       x = "Dispatch Travel Time (sec)", y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+plot_data <- plot_data |>
+  mutate(
+    DelayGroup = cut(
+      ETT_min,
+      breaks = c(-Inf, 6, 9, 15, Inf),
+      labels = c("0–6 min", "7–9 min", "10–15 min", ">15 min")
+    )
+  )
+
+counts <- plot_data |>
+  group_by(Scenario, DelayGroup) |>
+  summarise(N = n(), .groups = "drop")
+
+counts
+```
+
+```{r}
+library(viridis)
+
+counts$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
+
+ggplot(counts, aes(x = DelayGroup, y = N, fill = Scenario)) +
+  geom_col(position = "dodge") +
+  scale_fill_viridis_d(option = "D", end = 0.9) +
+  labs(title = "Counts of Dispatch Delays by Scenario",
+       x = "Delay Interval", y = "Number of Calls",
+       fill = "Scenario") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+
+ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 3) +
+  scale_color_viridis_d(option = "D", end = 0.9) +
+  labs(title = "Dispatch Delay Counts by Scenario",
+       x = "Delay Interval",
+       y = "Number of Calls",
+       color = "Scenario") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 11),
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
 ```
