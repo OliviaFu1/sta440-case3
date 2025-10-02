@@ -449,5 +449,5 @@ ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 3
 ```
 
 ```{r}
-ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region (Counts)",x="Count",y="Region",fill="Urgency Level")
+ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
