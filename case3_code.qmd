@@ -497,3 +497,109 @@ leaflet(x) |>
 
 ```
 
+### Static Map Plot
+
+```{r echo=FALSE}
+
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(tigris)
+
+options(tigris_use_cache = TRUE)
+
+vance_data <- counties(state = "NC", year = 2024, class = "sf") |> filter(GEOID == "37181")
+
+x_modified <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+
+coords_df<- st_as_sf(x_modified, coords = c("REF.GPS.LON","REF.GPS.LAT"), crs = 4326, remove = FALSE) |> st_transform(st_crs(vance_data))
+
+
+road_df <- roads(state = "NC", county = "Vance", year = 2024, class = "sf")
+
+
+plot_save <- ggplot() +
+  geom_sf(data = vance_data, fill = NA, color = "black", linewidth = 0.5) + geom_sf(data = road_df, color = "grey80", linewidth = 0.2) +
+  geom_sf(data = coords_df, aes(color = obsTTmodified), size = 1.8) +
+  scale_color_viridis_c(name = "Observed EMS Travel Time (minutes)", na.value = "grey80") +
+  coord_sf(xlim = st_bbox(vance_data)[c("xmin","xmax")],
+           ylim = st_bbox(vance_data)[c("ymin","ymax")], expand = FALSE) +
+  labs(title= "Observed Travel Times of Vance County EMS in minutes")+
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major = element_blank(),
+        axis.title = element_blank(), axis.text = element_blank(), axis.ticks = element_blank())
+
+ggsave("vance_county_ems_observedtravel.png", plot_save, width = 7, height = 7, dpi = 300)
+
+```
+
+### Static Map Plot Emergency/Non Emergency
+
+```{r echo=FALSE}
+
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(tigris)
+
+options(tigris_use_cache = TRUE)
+
+vance_data <- counties(state = "NC", year = 2024, class = "sf") |> filter(GEOID == "37181")
+
+x_modified <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+
+coords_df<- st_as_sf(x_modified, coords = c("REF.GPS.LON","REF.GPS.LAT"), crs = 4326, remove = FALSE) |> st_transform(st_crs(vance_data))
+
+
+road_df <- roads(state = "NC", county = "Vance", year = 2024, class = "sf")
+
+
+plot_save <- ggplot() +
+  geom_sf(data = vance_data, fill = NA, color = "black", linewidth = 0.5) + geom_sf(data = road_df, color = "grey80", linewidth = 0.2) +
+  geom_sf(data = coords_df, aes(color = DISPATCH.PRIORITY.NAME), size = 1.8) +
+  coord_sf(xlim = st_bbox(vance_data)[c("xmin","xmax")],
+           ylim = st_bbox(vance_data)[c("ymin","ymax")], expand = FALSE) +
+  labs(title= "Urgency of Vance County EMS Calls",color="Urgency Level")+
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major = element_blank(),
+        axis.title = element_blank(), axis.text = element_blank(), axis.ticks = element_blank())
+
+ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 300)
+```
+
+```{r}
+ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
+```
+
+# Modeling
+
+```{r}
+
+# Hierarchical LMM
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x_modified)
+summary(lme.out)
+
+
+x_modified<-x_modified|>mutate(region_category= case_when(
+
+  REF.GRID== "1 North"~"North",
+  REF.GRID=="2 Central"~"Central",
+  REF.GRID =="3 South"~"South"
+  
+))
+
+
+#GLS
+library(nlme)
+gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x_modified, na.action=na.omit)
+summary(gls.out)
+
+#par(mfrow=c(1,2),las=1)
+#qqnorm(residuals(lme.out),main="Residuals")
+#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
+
+
+```
