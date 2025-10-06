@@ -602,6 +602,22 @@ x<-x|>
     REF.GRID =="3 South"~"South"
 ))
 
+x<-x|>mutate(region_category= case_when(
+
+  REF.GRID== "1 North"~"North",
+  REF.GRID=="2 Central"~"Central",
+  REF.GRID =="3 South"~"South"
+  
+))
+
+# Hierarchical LMM
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|region_category)+DISPATCH.PRIORITY.NAME,data=x)
+summary(lme.out)
+
+
+
+
 #GLS
 library(nlme)
 gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x, na.action=na.omit)
@@ -654,11 +670,6 @@ summary(model_lmm)
 x2 <- x2 |>
   mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
-# Hierarchical LMM 
-library(lme4)
-lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x2)
-summary(lme.out)
-
 
 x2<-x2|>mutate(region_category= case_when(
 
@@ -667,6 +678,11 @@ x2<-x2|>mutate(region_category= case_when(
   REF.GRID =="3 South"~"South"
   
 ))
+
+# Hierarchical LMM 
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|region_category)+DISPATCH.PRIORITY.NAME,data=x2)
+summary(lme.out)
 
 
 #GLS
