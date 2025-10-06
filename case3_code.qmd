@@ -594,17 +594,12 @@ summary(lme.out)
 #summary(gls.out)
 ```
 
-<<<<<<< HEAD
 ```{r}
-x_modified<-x_modified|>mutate(region_category= case_when(
-=======
-x<-x|>mutate(region_category= case_when(
->>>>>>> ab2496de4b25ddd4c9b877541e3254a51ae80f88
-
-  REF.GRID== "1 North"~"North",
-  REF.GRID=="2 Central"~"Central",
-  REF.GRID =="3 South"~"South"
-  
+x<-x|>
+  mutate(region_category= case_when(
+    REF.GRID== "1 North"~"North",
+    REF.GRID=="2 Central"~"Central",
+    REF.GRID =="3 South"~"South"
 ))
 
 #GLS
@@ -617,7 +612,6 @@ summary(gls.out)
 #qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 ```
 
-<<<<<<< HEAD
 ```{r}
 df_model <- x |>
   select(S0_station, S0_ETT_DISPATCH, 
@@ -651,8 +645,9 @@ df_changed <- df_model |> filter(change_flag)
 model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
 summary(model_lmm)
 ```
-=======
+
 # Modeling Dispatch Rule 2
+
 ```{r}
 
 
@@ -684,5 +679,3 @@ summary(gls.out)
 #qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 
 ```
-
->>>>>>> ab2496de4b25ddd4c9b877541e3254a51ae80f88
