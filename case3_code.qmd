@@ -573,17 +573,20 @@ ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 3
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
 
-# Modeling
+# Modeling Dispatch Rule 1
 
 ```{r}
 
+x <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+
 # Hierarchical LMM
 library(lme4)
-lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x_modified)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x)
 summary(lme.out)
 
 
-x_modified<-x_modified|>mutate(region_category= case_when(
+x<-x|>mutate(region_category= case_when(
 
   REF.GRID== "1 North"~"North",
   REF.GRID=="2 Central"~"Central",
@@ -594,7 +597,7 @@ x_modified<-x_modified|>mutate(region_category= case_when(
 
 #GLS
 library(nlme)
-gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x_modified, na.action=na.omit)
+gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x, na.action=na.omit)
 summary(gls.out)
 
 #par(mfrow=c(1,2),las=1)
@@ -603,3 +606,37 @@ summary(gls.out)
 
 
 ```
+
+# Modeling Dispatch Rule 2
+```{r}
+
+
+x2 <- x2 |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+
+# Hierarchical LMM 
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x2)
+summary(lme.out)
+
+
+x2<-x2|>mutate(region_category= case_when(
+
+  REF.GRID== "1 North"~"North",
+  REF.GRID=="2 Central"~"Central",
+  REF.GRID =="3 South"~"South"
+  
+))
+
+
+#GLS
+library(nlme)
+gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x2, na.action=na.omit)
+summary(gls.out)
+
+#par(mfrow=c(1,2),las=1)
+#qqnorm(residuals(lme.out),main="Residuals")
+#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
+
+```
+
