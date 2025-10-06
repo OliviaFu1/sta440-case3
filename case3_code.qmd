@@ -454,19 +454,50 @@ ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count
 # Modeling
 
 ```{r}
+x_modified <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
 # Hierarchical LMM
 library(lme4)
 lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x_modified)
 summary(lme.out)
 
-
-
-
 # GLS
 #library(nlme)
 #gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|REF.GRID),data=x_modified)
 #summary(gls.out)
+```
 
+```{r}
+df_model <- x |>
+  select(S0_station, S0_ETT_DISPATCH, 
+         S1_station, S1_ETT_DISPATCH, 
+         S2_station, S2_ETT_DISPATCH, 
+         S3_station, S3_ETT_DISPATCH,
+         S4_station, S4_ETT_DISPATCH,
+         REF.GRID) |>
+  mutate(ID = row_number()) |>
+  pivot_longer(
+    cols = matches("S\\d+_"), 
+    names_to = c("Scenario", ".value"),
+    names_pattern = "(S\\d+)_(.*)"
+  )
 
+df_model <- df_model |>
+  group_by(ID) |>
+  mutate(
+    change_flag = (max(ETT_DISPATCH) != min(ETT_DISPATCH))  # TRUE if not all equal
+  ) |>
+  ungroup()
+
+# logistic model
+model_logit <- glm(change_flag ~ REF.GRID, 
+                   data = df_model, 
+                   family = binomial)
+summary(model_logit)
+
+# lmm model
+df_changed <- df_flags |> filter(change_flag)
+model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
+summary(model_lmm)
 ```
