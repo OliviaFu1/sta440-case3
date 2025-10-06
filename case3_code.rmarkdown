@@ -4,7 +4,11 @@ format: html
 editor: visual
 ---
 
+
+
 # Data
+
+
 
 ```{r}
 library(tidyverse)
@@ -17,7 +21,11 @@ library(tidyr)
 load("./emsData.RData")
 ```
 
+
+
 # EDA
+
+
 
 ```{r}
 # remove duplicated entries of the same call
@@ -26,7 +34,11 @@ x <- x |>
   distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
 ```
 
+
+
 ## Problem in North
+
+
 
 ```{r}
 x |>
@@ -63,7 +75,11 @@ ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot
 
 ```
 
+
+
 ## Actual vs. Estimated
+
+
 
 ```{r}
 x <- x |>
@@ -145,7 +161,11 @@ ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
   theme_minimal()
 ```
 
+
+
 ## Comparing scenarios
+
+
 
 ```{r}
 # S0: Central + South
@@ -187,7 +207,11 @@ ggplot(shortest_ett, aes(x = time)) +
   facet_wrap(~scenario)
 ```
 
+
+
 ### Consider System load (dispatch rule)
+
+
 
 ```{r}
 # order in dispatch time
@@ -471,7 +495,11 @@ ggplot(counts2, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) 
   )
 ```
 
+
+
 ## Mapping Plots
+
+
 ```{r}
 library(sf)
 library(ggplot2)
@@ -497,7 +525,11 @@ leaflet(x) |>
 
 ```
 
+
+
 ### Static Map Plot
+
+
 
 ```{r echo=FALSE}
 
@@ -534,7 +566,11 @@ ggsave("vance_county_ems_observedtravel.png", plot_save, width = 7, height = 7, 
 
 ```
 
+
+
 ### Static Map Plot Emergency/Non Emergency
+
+
 
 ```{r echo=FALSE}
 
@@ -573,7 +609,11 @@ ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 3
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
 
+
+
 # Modeling Dispatch Rule 1
+
+
 
 ```{r}
 
@@ -608,7 +648,11 @@ summary(gls.out)
 
 ```
 
+
+
 # Modeling Dispatch Rule 2
+
+
 ```{r}
 
 
