@@ -377,7 +377,7 @@ leaflet(x_subset) |>
 
 ### Static Map Plot
 
-```{r eval=FALSE}
+```{r echo=FALSE}
 
 library(dplyr)
 library(sf)
@@ -414,7 +414,7 @@ ggsave("vance_county_ems_observedtravel.png", plot_save, width = 7, height = 7, 
 
 ### Static Map Plot Emergency/Non Emergency
 
-```{r eval=FALSE}
+```{r echo=FALSE}
 
 library(dplyr)
 library(sf)
@@ -454,5 +454,19 @@ ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count
 # Modeling
 
 ```{r}
+
+# Hierarchical LMM
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x_modified)
+summary(lme.out)
+
+
+
+
+# GLS
+#library(nlme)
+#gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|REF.GRID),data=x_modified)
+#summary(gls.out)
+
 
 ```
