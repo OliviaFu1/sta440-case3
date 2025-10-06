@@ -639,7 +639,7 @@ model_logit <- glm(change_flag ~ REF.GRID,
 summary(model_logit)
 
 # lmm model
-df_changed <- df_flags |> filter(change_flag)
+df_changed <- df_model |> filter(change_flag)
 model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
 summary(model_lmm)
 ```
