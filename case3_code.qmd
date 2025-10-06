@@ -425,8 +425,8 @@ options(tigris_use_cache = TRUE)
 
 vance_data <- counties(state = "NC", year = 2024, class = "sf") |> filter(GEOID == "37181")
 
-#x_modified <- x |>
- # mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+x_modified <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
 coords_df<- st_as_sf(x_modified, coords = c("REF.GPS.LON","REF.GPS.LAT"), crs = 4326, remove = FALSE) |> st_transform(st_crs(vance_data))
 
@@ -461,12 +461,23 @@ lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x_modified)
 summary(lme.out)
 
 
+x_modified<-x_modified|>mutate(region_category= case_when(
+
+  REF.GRID== "1 North"~"North",
+  REF.GRID=="2 Central"~"Central",
+  REF.GRID =="3 South"~"South"
+  
+))
 
 
-# GLS
-#library(nlme)
-#gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|REF.GRID),data=x_modified)
-#summary(gls.out)
+#GLS
+library(nlme)
+gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x_modified, na.action=na.omit)
+summary(gls.out)
+
+#par(mfrow=c(1,2),las=1)
+#qqnorm(residuals(lme.out),main="Residuals")
+#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 
 
 ```
