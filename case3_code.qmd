@@ -340,137 +340,6 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
   )
 ```
 
-```{r}
- dispatch_scenario2 <- function(x, avail_matrix, scenario_caps, ett_map, label, lambda = 0.5) {
-  n_calls <- nrow(x)
-  used_station <- rep(NA_character_, n_calls)
-  dispatch_ett <- rep(NA_real_, n_calls)
-
-  # track how many vehicles are busy at each station over time
-  busy_count <- rep(0, length(scenario_caps))
-  names(busy_count) <- names(scenario_caps)
-  
-  for (i in seq_len(n_calls)) {
-    avail_veh <- scenario_caps
-    
-    # check conflicts with earlier calls
-    conflict_cols <- which(avail_matrix[i, ])
-    if (length(conflict_cols) > 0) {
-      for (j in conflict_cols) {
-        st <- used_station[j]
-        if (!is.na(st)) {
-          avail_veh[st] <- avail_veh[st] - 1
-          busy_count[st] <- busy_count[st] + 1
-        }
-      }
-    }
-    
-    # choose station with lowest (ETT + λ * load penalty)
-    best_station <- NA
-    best_score <- Inf
-    
-    for (st in names(scenario_caps)) {
-      if (avail_veh[st] > 0) {
-        ett_val <- x[[ett_map[st]]][i]
-        
-        # load penalty = fraction busy at that station
-        load_penalty <- busy_count[st] / scenario_caps[st]
-        
-        # combined score
-        score <- ett_val + lambda * (load_penalty * mean(unlist(x[ett_map]), na.rm = TRUE))
-        # scale penalty roughly to seconds
-        if (score < best_score) {
-          best_score <- score
-          best_station <- st
-        }
-      }
-    }
-    
-    used_station[i] <- best_station
-    dispatch_ett[i] <- x[[ett_map[best_station]]][i]
-  }
-  
-  x[[paste0(label, "_station")]] <- used_station
-  x[[paste0(label, "_ETT_DISPATCH")]] <- dispatch_ett
-  return(x)
-}
-
-```
-
-```{r}
-# Station → ETT column mapping
-ett_map <- c(South="eTT.BG.So", Central="eTT.BG.Ce", NN="eTT.BG.NN", FN="eTT.BG.FN")
-
-# Define scenarios (capacities per station)
-S0_caps <- c(South=1, Central=3, NN=0, FN=0)
-S1_caps <- c(South=0, Central=3, NN=1, FN=0)
-S2_caps <- c(South=0, Central=3, NN=0, FN=1)
-S3_caps <- c(South=1, Central=2, NN=1, FN=0)
-S4_caps <- c(South=1, Central=2, NN=0, FN=1)
-
-x2 <- x |> arrange(DT.DISP)
-
-# Apply
-x2 <- dispatch_scenario2(x2, avail_matrix, S0_caps, ett_map, "S0")
-x2 <- dispatch_scenario2(x2, avail_matrix, S1_caps, ett_map, "S1")
-x2 <- dispatch_scenario2(x2, avail_matrix, S2_caps, ett_map, "S2")
-x2 <- dispatch_scenario2(x2, avail_matrix, S3_caps, ett_map, "S3")
-x2 <- dispatch_scenario2(x2, avail_matrix, S4_caps, ett_map, "S4")
-
-plot_data2 <- x2 |>
-  pivot_longer(cols = starts_with("S") & ends_with("ETT_DISPATCH"),
-               names_to = "Scenario",
-               values_to = "ETT") |>
-  mutate(ETT_min = ETT / 60)
-
-plot_data2 <- plot_data2 |>
-  mutate(
-    DelayGroup = cut(
-      ETT_min,
-      breaks = c(-Inf, 6, 9, 15, Inf),
-      labels = c("0–6 min", "7–9 min", "10–15 min", ">15 min")
-    )
-  )
-
-counts2 <- plot_data2 |>
-  group_by(Scenario, DelayGroup) |>
-  summarise(N = n(), .groups = "drop")
-
-```
-
-```{r}
-
-counts2$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
-
-ggplot(counts2, aes(x = DelayGroup, y = N, fill = Scenario)) +
-  geom_col(position = "dodge") +
-  scale_fill_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Counts of Dispatch Rule 2 Delays by Scenario",
-       x = "Delay Interval", y = "Number of Calls",
-       fill = "Scenario") +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "bottom",
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
-
-ggplot(counts2, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  scale_color_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Dispatch Rule 2 Delay Counts by Scenario",
-       x = "Delay Interval",
-       y = "Number of Calls",
-       color = "Scenario") +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 11),
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
-```
-
 ## Mapping Plots
 
 ```{r}
@@ -574,7 +443,7 @@ ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 3
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
 
-# Modeling Dispatch Rule 1
+# Modeling
 
 ```{r}
 
@@ -634,35 +503,8 @@ model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
 summary(model_lmm)
 ```
 
-# Modeling Dispatch Rule 2
+## LMM
 
-```{r}
-x2 <- x2 |>
-  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
-
-
-x2<-x2|>mutate(region_category= case_when(
-  REF.GRID== "1 North"~"North",
-  REF.GRID=="2 Central"~"Central",
-  REF.GRID =="3 South"~"South"
-  
-))
-
-# Hierarchical LMM 
-library(lme4)
-lme.out<-lmer(obsTTmodified~(1|region_category)+DISPATCH.PRIORITY.NAME,data=x2)
-summary(lme.out)
-
-#GLS
-library(nlme)
-gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x2, na.action=na.omit)
-summary(gls.out)
-
-```
-
-
-
-## LMM Modeling Part #3 using dispatch rule 1
 ```{r}
 library(dplyr)
 library(tidyr)
@@ -710,4 +552,3 @@ cat("\nBy region optimal scenario:\n"); print(opt_by_region)
 
 
 ```
-
