@@ -644,6 +644,21 @@ gls_model_pow <- gls(
 anova(gls_model, gls_model_pow)
 ```
 
+## Extended LMM
+
+```{r}
+library(nlme)
+
+lmm_model_ext <- lme(
+  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,                           # random intercept per call
+  weights = varIdent(form = ~1 | region_category), # different variance per region
+  data = model_df
+)
+
+anova(gls_model, lmm_model_ext)
+```
+
 # Evaluate benefits
 
 ## Emmeans
