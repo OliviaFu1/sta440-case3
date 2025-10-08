@@ -577,24 +577,10 @@ ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count
 # Modeling Dispatch Rule 1
 
 ```{r}
-x_modified <- x |>
-  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
 x <- x |>
   mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
-# Hierarchical LMM
-library(lme4)
-lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x)
-summary(lme.out)
-
-# GLS
-#library(nlme)
-#gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|REF.GRID),data=x_modified)
-#summary(gls.out)
-```
-
-```{r}
 x<-x|>
   mutate(region_category= case_when(
     REF.GRID== "1 North"~"North",
@@ -602,21 +588,16 @@ x<-x|>
     REF.GRID =="3 South"~"South"
 ))
 
-x <- x |>
-  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
-
 # Hierarchical LMM
 library(lme4)
-lme.out<-lmer(obsTTmodified~(1|region_category)+DISPATCH.PRIORITY.NAME,data=x)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x)
 summary(lme.out)
+
 
 #GLS
 library(nlme)
 gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x, na.action=na.omit)
 summary(gls.out)
-#par(mfrow=c(1,2),las=1)
-#qqnorm(residuals(lme.out),main="Residuals")
-#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 ```
 
 ```{r}
@@ -676,9 +657,7 @@ summary(lme.out)
 library(nlme)
 gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x2, na.action=na.omit)
 summary(gls.out)
-#par(mfrow=c(1,2),las=1)
-#qqnorm(residuals(lme.out),main="Residuals")
-#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
+
 ```
 
 
@@ -728,10 +707,6 @@ opt_by_region <- as.data.frame(emmeans_region) |>
  slice_min(emmean, n = 1) |>
  ungroup()
 cat("\nBy region optimal scenario:\n"); print(opt_by_region)
-
-
-
-
 
 
 ```
