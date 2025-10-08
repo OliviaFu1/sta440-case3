@@ -505,7 +505,7 @@ model_df <- model_df |>
 
 ```{r}
 # logistic model
-model_logit <- glm(change_flag ~ region_category, 
+model_logit <- glm(change_flag ~ region_category + DISPATCH.PRIORITY.NAME, 
                    data = model_df, 
                    family = binomial)
 summary(model_logit)
@@ -549,6 +549,7 @@ qqnorm(resid(lmm_model))
 qqline(resid(lmm_model), col = "red")
 
 hist(model_df$ETT_sec, breaks = 50)
+hist(log(model_df$ETT_sec), breaks = 50)
 ```
 
 ### Only calls with different ETT across scenarios
@@ -645,6 +646,8 @@ anova(gls_model, gls_model_pow)
 
 # Evaluate benefits
 
+## Emmeans
+
 ```{r}
 # overall optimal emmeans scenario
 emmeans_overall <- emmeans(lmm_model, ~ Scenario)
@@ -660,6 +663,50 @@ opt_by_region <- as.data.frame(emmeans_region) |>
 cat("\nBy region optimal scenario:\n"); print(opt_by_region)
 ```
 
-```{r}
+## Frequency with which the ambulance at the closest station is available
 
+```{r}
+x <- x |>
+  mutate(
+    S0_closest_avail = (S0_ETT_DISPATCH == S0),
+    S1_closest_avail = (S1_ETT_DISPATCH == S1),
+    S2_closest_avail = (S2_ETT_DISPATCH == S2),
+    S3_closest_avail = (S3_ETT_DISPATCH == S3),
+    S4_closest_avail = (S4_ETT_DISPATCH == S4)
+  )
+
+closest_summary <- x |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_summary
+
+closest_by_region <- x |> 
+  group_by(REF.GRID) |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_by_region
+
+closest_by_priority <- x |> 
+  group_by(DISPATCH.PRIORITY.NAME) |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_by_priority
 ```
