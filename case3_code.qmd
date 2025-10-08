@@ -517,10 +517,8 @@ summary(model_logit)
 library(lmerTest)
 
 lmm_model <- lmer(
-  log(ETT_sec) ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
-    (1 | row_val),
-  data = model_df,
-  REML = FALSE
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME + (1 | row_val),
+  data = model_df
 )
 summary(lmm_model)
 ```
@@ -546,11 +544,16 @@ ggplot(model_df, aes(x = region_category, y = resid)) +
   labs(title = "Residuals by Region",
        x = "Region", y = "Residuals")
 
-qqnorm(resid(lmm_model))
-qqline(resid(lmm_model), col = "red")
-
 hist(model_df$ETT_sec, breaks = 50)
 hist(log(model_df$ETT_sec), breaks = 50)
+
+# Residuals Q-Q plot
+qqnorm(residuals(lmm_model), main = "Residuals")
+qqline(residuals(lmm_model), col = "red")
+
+# Random effects Q-Q plot
+qqnorm(unlist(ranef(lmm_model)$row_val), main = "Random Effects")
+qqline(unlist(ranef(lmm_model)$row_val), col = "red")
 ```
 
 ### Only calls with different ETT across scenarios
@@ -559,10 +562,8 @@ hist(log(model_df$ETT_sec), breaks = 50)
 changed_df <- model_df |> filter(change_flag)
 
 lmm_model_changed <- lmer(
-  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
-    (1 | row_val),
-  data = changed_df,
-  REML = FALSE
+  ETT_sec ~ Scenario + region_category + DISPATCH.PRIORITY.NAME + (1 | row_val),
+  data = changed_df
 )
 summary(lmm_model_changed)
 
@@ -598,7 +599,7 @@ hist(changed_df$ETT_sec, breaks = 50)
 library(nlme)
 
 gls_model <- gls(
-  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME,
+  ETT_sec ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
   data = model_df
 )
 
@@ -634,8 +635,6 @@ gls_model_region <- gls(
 )
 
 anova(gls_model, gls_model_region)
-
-
 ```
 
 ```{r}
@@ -649,6 +648,7 @@ anova(gls_model, gls_model_pow)
 ```
 
 ## Anova between GLS and LMM
+
 ```{r}
 #anova gls and original lmm
 anova(lmm_model,gls_model)
@@ -673,23 +673,34 @@ BIC(lmm_model_changed,gls_model_pow)
 
 ```
 
-
-
-
-
 ## Extended LMM
 
 ```{r}
 library(nlme)
 
 lmm_model_ext <- lme(
-  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME,
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
   random = ~1 | row_val,                           # random intercept per call
   weights = varIdent(form = ~1 | region_category), # different variance per region
   data = model_df
 )
 
-anova(gls_model, lmm_model_ext)
+# Residuals Q-Q plot
+qqnorm(residuals(lmm_model_ext), main = "Residuals")
+qqline(residuals(lmm_model_ext), col = "red")
+
+# Random effects Q-Q plot
+re <- ranef(lmm_model_ext)
+qqnorm(re[,1], main = "Random Effects")
+qqline(re[,1], col = "red")
+
+lmm_no_weights <- lme(
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,
+  data = model_df
+)
+
+anova(lmm_no_weights, lmm_model_ext)
 ```
 
 # Evaluate benefits
