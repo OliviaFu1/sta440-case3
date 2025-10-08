@@ -652,16 +652,24 @@ anova(gls_model, gls_model_pow)
 ```{r}
 #anova gls and original lmm
 anova(lmm_model,gls_model)
+AIC(lmm_model,gls_model)
+#BIC(anova(lmm_model,gls_model))
 
 #anova gls_model_pow and original lmm
 anova(lmm_model,gls_model_pow)
+AIC(lmm_model,gls_model_pow)
+#BIC(lmm_model,gls_model_pow)
 
 
 #anova gls and lmm_model changed
 anova(lmm_model_changed,gls_model)
+AIC(lmm_model_changed,gls_model)
+#BIC(lmm_model_changed,gls_model)
 
 #anova gls_model_pow and lmm_model_changed
 anova(lmm_model_changed,gls_model_pow)
+AIC(lmm_model_changed,gls_model_pow)
+#BIC(lmm_model_changed,gls_model_pow)
 
 ```
 
