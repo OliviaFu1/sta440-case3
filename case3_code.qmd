@@ -744,12 +744,12 @@ BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_intera
 
 ```{r}
 # overall optimal emmeans scenario
-emmeans_overall <- emmeans(lmm_model_ext, ~ Scenario)
+emmeans_overall <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario)
 opt_overall <- as.data.frame(emmeans_overall) |> slice_min(emmean, n = 1)
 cat("Overall optimal scenario:\n"); print(opt_overall)
 
 # optimal scenario by region
-emmeans_region <- emmeans(lmm_model_ext, ~ Scenario | region_category)
+emmeans_region <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario | region_category)
 opt_by_region <- as.data.frame(emmeans_region) |>
  group_by(region_category) |>
  slice_min(emmean, n = 1) |>
