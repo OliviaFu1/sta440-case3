@@ -673,7 +673,10 @@ BIC(lmm_model_changed,gls_model_pow)
 
 ```
 
-## Extended LMM
+
+
+
+## Extended LMMs setup for comparing
 
 ```{r}
 library(nlme)
@@ -700,8 +703,40 @@ lmm_no_weights <- lme(
   data = model_df
 )
 
+
+lmm_interaction<-lme(
+  log(ETT_sec) ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
+lmm_no_dispatch_name_no_interaction<-lme(
+  log(ETT_sec) ~ Scenario+ region_category,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
+lmm_no_dispatch_name_interaction<-lme(
+  log(ETT_sec) ~ Scenario*region_category,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
 anova(lmm_no_weights, lmm_model_ext)
 ```
+
+
+## (IMPORTANT PLEASE CHECK) AIC and BIC across LMM models
+```{r}
+AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+```
+
+
+
 
 # Evaluate benefits
 
