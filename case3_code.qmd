@@ -680,3 +680,59 @@ summary(gls.out)
 #qqnorm(residuals(lme.out),main="Residuals")
 #qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 ```
+
+
+
+## LMM Modeling Part #3 using dispatch rule 1
+```{r}
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lme4)
+library(emmeans)
+
+model_df <- x |>
+  dplyr::transmute(
+    row_val = dplyr::row_number(),region_category, DISPATCH.PRIORITY.NAME,
+    dplyr::across(matches("^S\\d+_ETT_DISPATCH$"))
+  ) |>
+  tidyr::pivot_longer(
+    cols = matches("^S\\d+_ETT_DISPATCH$"),
+    names_to = "Scenario",
+    values_to = "ETT_sec"
+  ) |>
+  dplyr::mutate(
+    Scenario        = stringr::str_remove(Scenario, "_ETT_DISPATCH$"),
+    Scenario        = factor(Scenario),
+    region_category = factor(region_category),
+    ETT_min         = ETT_sec / 60
+  )
+
+
+lmm_model_final <- lmer(
+  ETT_min ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
+    (1 | row_val),
+  data = model_df
+)
+
+
+# overall optimal emmeans scenario
+emmeans_overall <- emmeans(lmm_model_final, ~ Scenario)
+opt_overall <- as.data.frame(emmeans_overall) |> slice_min(emmean, n = 1)
+cat("Overall optimal scenario:\n"); print(opt_overall)
+
+# optimal scenario by region
+emmeans_region <- emmeans(lmm_model_final, ~ Scenario | region_category)
+opt_by_region <- as.data.frame(emmeans_region) |>
+ group_by(region_category) |>
+ slice_min(emmean, n = 1) |>
+ ungroup()
+cat("\nBy region optimal scenario:\n"); print(opt_by_region)
+
+
+
+
+
+
+```
+
