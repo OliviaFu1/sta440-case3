@@ -671,17 +671,17 @@ library(lme4)
 library(emmeans)
 
 model_df <- x |>
-  dplyr::transmute(
-    row_val = dplyr::row_number(),region_category, DISPATCH.PRIORITY.NAME,
-    dplyr::across(matches("^S\\d+_ETT_DISPATCH$"))
+  transmute(
+    row_val = row_number(),region_category, DISPATCH.PRIORITY.NAME,
+    across(matches("^S\\d+_ETT_DISPATCH$"))
   ) |>
-  tidyr::pivot_longer(
+  pivot_longer(
     cols = matches("^S\\d+_ETT_DISPATCH$"),
     names_to = "Scenario",
     values_to = "ETT_sec"
   ) |>
   dplyr::mutate(
-    Scenario        = stringr::str_remove(Scenario, "_ETT_DISPATCH$"),
+    Scenario        = str_remove(Scenario, "_ETT_DISPATCH$"),
     Scenario        = factor(Scenario),
     region_category = factor(region_category),
     ETT_min         = ETT_sec / 60
