@@ -519,7 +519,8 @@ library(lmerTest)
 lmm_model <- lmer(
   log(ETT_sec) ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
     (1 | row_val),
-  data = model_df
+  data = model_df,
+  REML = FALSE
 )
 summary(lmm_model)
 ```
@@ -560,7 +561,8 @@ changed_df <- model_df |> filter(change_flag)
 lmm_model_changed <- lmer(
   ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
     (1 | row_val),
-  data = changed_df
+  data = changed_df,
+  REML = FALSE
 )
 summary(lmm_model_changed)
 
@@ -632,6 +634,8 @@ gls_model_region <- gls(
 )
 
 anova(gls_model, gls_model_region)
+
+
 ```
 
 ```{r}
@@ -643,6 +647,27 @@ gls_model_pow <- gls(
 
 anova(gls_model, gls_model_pow)
 ```
+
+## Anova between GLS and LMM
+```{r}
+#anova gls and original lmm
+anova(lmm_model,gls_model)
+
+#anova gls_model_pow and original lmm
+anova(lmm_model,gls_model_pow)
+
+
+#anova gls and lmm_model changed
+anova(lmm_model_changed,gls_model)
+
+#anova gls_model_pow and lmm_model_changed
+anova(lmm_model_changed,gls_model_pow)
+
+```
+
+
+
+
 
 ## Extended LMM
 
