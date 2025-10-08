@@ -149,19 +149,19 @@ ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
 
 ```{r}
 # S0: Central + South
-x$S0 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, na.rm = TRUE)
+x$S0 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, na.rm = TRUE)
 
 # S1: Central + Near North
-x$S1 <- pmin(x$eTT.UA.Ce, x$eTT.UA.NN, na.rm = TRUE)
+x$S1 <- pmin(x$eTT.BG.Ce, x$eTT.BG.NN, na.rm = TRUE)
 
 # S2: Central + Far North
-x$S2 <- pmin(x$eTT.UA.Ce, x$eTT.UA.FN, na.rm = TRUE)
+x$S2 <- pmin(x$eTT.BG.Ce, x$eTT.BG.FN, na.rm = TRUE)
 
 # S3: Central + South + Near North
-x$S3 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.NN, na.rm = TRUE)
+x$S3 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.NN, na.rm = TRUE)
 
 # S4: Central + South + Far North
-x$S4 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.FN, na.rm = TRUE)
+x$S4 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.FN, na.rm = TRUE)
 ```
 
 ```{r}
@@ -469,8 +469,6 @@ gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0
 summary(gls.out)
 ```
 
-## LMM
-
 ```{r}
 library(dplyr)
 library(tidyr)
@@ -501,39 +499,167 @@ model_df <- model_df |>
     change_flag = (max(ETT_sec) != min(ETT_sec))  # TRUE if not all equal
   ) |>
   ungroup()
+```
 
+## Logistic Regression
+
+```{r}
 # logistic model
 model_logit <- glm(change_flag ~ region_category, 
                    data = model_df, 
                    family = binomial)
 summary(model_logit)
+```
 
-# lmm model
-df_changed <- model_df |> filter(change_flag)
-model_lmm <- lmer(ETT_sec ~ Scenario + (1|row_val), data = df_changed)
-summary(model_lmm)
+## LMM
 
-lmm_model_final <- lmer(
-  ETT_min ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
+```{r}
+library(lmerTest)
+
+lmm_model <- lmer(
+  log(ETT_sec) ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
     (1 | row_val),
   data = model_df
 )
-summary(lmm_model_final)
+summary(lmm_model)
 ```
 
-## EMMEANS
+```{r}
+model_df$fitted <- fitted(lmm_model)
+model_df$resid  <- resid(lmm_model)
+
+ggplot(model_df, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
+
+ggplot(model_df, aes(x = Scenario, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
+
+ggplot(model_df, aes(x = region_category, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
+
+qqnorm(resid(lmm_model))
+qqline(resid(lmm_model), col = "red")
+
+hist(model_df$ETT_sec, breaks = 50)
+```
+
+### Only calls with different ETT across scenarios
+
+```{r}
+changed_df <- model_df |> filter(change_flag)
+
+lmm_model_changed <- lmer(
+  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
+    (1 | row_val),
+  data = changed_df
+)
+summary(lmm_model_changed)
+
+changed_df$fitted <- fitted(lmm_model_changed)
+changed_df$resid  <- resid(lmm_model_changed)
+
+ggplot(changed_df, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
+
+ggplot(changed_df, aes(x = Scenario, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
+
+ggplot(changed_df, aes(x = region_category, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
+
+qqnorm(resid(lmm_model_changed))
+qqline(resid(lmm_model_changed), col = "red")
+
+hist(changed_df$ETT_sec, breaks = 50)
+```
+
+## GLS
+
+```{r}
+library(nlme)
+
+gls_model <- gls(
+  ETT_sec ~ Scenario * region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df
+)
+
+model_df$gls_fitted <- fitted(gls_model)
+model_df$gls_resid  <- resid(gls_model)
+
+ggplot(model_df, aes(x = gls_fitted, y = gls_resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
+
+ggplot(model_df, aes(x = Scenario, y = gls_resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
+
+ggplot(model_df, aes(x = region_category, y = gls_resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
+
+qqnorm(resid(gls_model))
+qqline(resid(gls_model), col = "red")
+```
+
+```{r}
+gls_model_region <- gls(
+  ETT_sec ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df, method = "REML",
+  weights = varIdent(form = ~ 1 | region_category)
+)
+
+anova(gls_model, gls_model_region)
+```
+
+```{r}
+gls_model_pow <- gls(
+  ETT_sec ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df, method = "REML",
+  weights = varPower(form = ~ fitted(.))   # variance ∝ mean^δ
+)
+
+anova(gls_model, gls_model_pow)
+```
+
+# Evaluate benefits
 
 ```{r}
 # overall optimal emmeans scenario
-emmeans_overall <- emmeans(lmm_model_final, ~ Scenario)
+emmeans_overall <- emmeans(lmm_model, ~ Scenario)
 opt_overall <- as.data.frame(emmeans_overall) |> slice_min(emmean, n = 1)
 cat("Overall optimal scenario:\n"); print(opt_overall)
 
 # optimal scenario by region
-emmeans_region <- emmeans(lmm_model_final, ~ Scenario | region_category)
+emmeans_region <- emmeans(lmm_model, ~ Scenario | region_category)
 opt_by_region <- as.data.frame(emmeans_region) |>
  group_by(region_category) |>
  slice_min(emmean, n = 1) |>
  ungroup()
 cat("\nBy region optimal scenario:\n"); print(opt_by_region)
+```
+
+```{r}
+
 ```
