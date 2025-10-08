@@ -469,40 +469,6 @@ gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0
 summary(gls.out)
 ```
 
-```{r}
-df_model <- x |>
-  select(S0_station, S0_ETT_DISPATCH, 
-         S1_station, S1_ETT_DISPATCH, 
-         S2_station, S2_ETT_DISPATCH, 
-         S3_station, S3_ETT_DISPATCH,
-         S4_station, S4_ETT_DISPATCH,
-         REF.GRID) |>
-  mutate(ID = row_number()) |>
-  pivot_longer(
-    cols = matches("S\\d+_"), 
-    names_to = c("Scenario", ".value"),
-    names_pattern = "(S\\d+)_(.*)"
-  )
-
-df_model <- df_model |>
-  group_by(ID) |>
-  mutate(
-    change_flag = (max(ETT_DISPATCH) != min(ETT_DISPATCH))  # TRUE if not all equal
-  ) |>
-  ungroup()
-
-# logistic model
-model_logit <- glm(change_flag ~ REF.GRID, 
-                   data = df_model, 
-                   family = binomial)
-summary(model_logit)
-
-# lmm model
-df_changed <- df_model |> filter(change_flag)
-model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
-summary(model_lmm)
-```
-
 ## LMM
 
 ```{r}
@@ -529,14 +495,35 @@ model_df <- x |>
     ETT_min         = ETT_sec / 60
   )
 
+model_df <- model_df |>
+  group_by(row_val) |>
+  mutate(
+    change_flag = (max(ETT_sec) != min(ETT_sec))  # TRUE if not all equal
+  ) |>
+  ungroup()
+
+# logistic model
+model_logit <- glm(change_flag ~ region_category, 
+                   data = model_df, 
+                   family = binomial)
+summary(model_logit)
+
+# lmm model
+df_changed <- model_df |> filter(change_flag)
+model_lmm <- lmer(ETT_sec ~ Scenario + (1|row_val), data = df_changed)
+summary(model_lmm)
 
 lmm_model_final <- lmer(
   ETT_min ~ Scenario * region_category + DISPATCH.PRIORITY.NAME +
     (1 | row_val),
   data = model_df
 )
+summary(lmm_model_final)
+```
 
+## EMMEANS
 
+```{r}
 # overall optimal emmeans scenario
 emmeans_overall <- emmeans(lmm_model_final, ~ Scenario)
 opt_overall <- as.data.frame(emmeans_overall) |> slice_min(emmean, n = 1)
@@ -549,6 +536,4 @@ opt_by_region <- as.data.frame(emmeans_region) |>
  slice_min(emmean, n = 1) |>
  ungroup()
 cat("\nBy region optimal scenario:\n"); print(opt_by_region)
-
-
 ```
