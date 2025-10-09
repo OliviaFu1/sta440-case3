@@ -747,18 +747,22 @@ BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_intera
 library(kableExtra)
 # overall optimal emmeans scenario
 emmeans_overall <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario)
-opt_overall <- as.data.frame(emmeans_overall)  #slice_min(emmean, n = 1)
+opt_overall <- as.data.frame(emmeans_overall) 
+min<-which.min(opt_overall$emmean)
+#slice_min(emmean, n = 1)
 #cat("Overall optimal scenario:\n"); print(opt_overall)
-kable(opt_overall)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+kable(opt_overall)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
 
 # optimal scenario by region
 emmeans_region <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario | region_category)
 opt_by_region <- as.data.frame(emmeans_region) |>
  group_by(region_category) 
+#min<-which.min(opt_by_region$emmean)
  #slice_min(emmean, n = 1) |>
  #ungroup()
 #cat("\nBy region optimal scenario:\n"); print(opt_by_region)
 kable(opt_by_region)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+##|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
 ```
 
 
