@@ -731,8 +731,14 @@ anova(lmm_no_weights, lmm_model_ext)
 
 ## (IMPORTANT PLEASE CHECK) AIC and BIC across LMM models
 ```{r}
-AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
-BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+library(kableExtra)
+aic_table<-AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+bic_table<-BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+
+kable(aic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+kable(bic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+
+
 ```
 
 
