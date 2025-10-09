@@ -149,19 +149,19 @@ ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
 
 ```{r}
 # S0: Central + South
-x$S0 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, na.rm = TRUE)
+x$S0 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, na.rm = TRUE)
 
 # S1: Central + Near North
-x$S1 <- pmin(x$eTT.UA.Ce, x$eTT.UA.NN, na.rm = TRUE)
+x$S1 <- pmin(x$eTT.BG.Ce, x$eTT.BG.NN, na.rm = TRUE)
 
 # S2: Central + Far North
-x$S2 <- pmin(x$eTT.UA.Ce, x$eTT.UA.FN, na.rm = TRUE)
+x$S2 <- pmin(x$eTT.BG.Ce, x$eTT.BG.FN, na.rm = TRUE)
 
 # S3: Central + South + Near North
-x$S3 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.NN, na.rm = TRUE)
+x$S3 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.NN, na.rm = TRUE)
 
 # S4: Central + South + Far North
-x$S4 <- pmin(x$eTT.UA.Ce, x$eTT.UA.So, x$eTT.UA.FN, na.rm = TRUE)
+x$S4 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.FN, na.rm = TRUE)
 ```
 
 ```{r}
@@ -340,137 +340,6 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
   )
 ```
 
-```{r}
- dispatch_scenario2 <- function(x, avail_matrix, scenario_caps, ett_map, label, lambda = 0.5) {
-  n_calls <- nrow(x)
-  used_station <- rep(NA_character_, n_calls)
-  dispatch_ett <- rep(NA_real_, n_calls)
-
-  # track how many vehicles are busy at each station over time
-  busy_count <- rep(0, length(scenario_caps))
-  names(busy_count) <- names(scenario_caps)
-  
-  for (i in seq_len(n_calls)) {
-    avail_veh <- scenario_caps
-    
-    # check conflicts with earlier calls
-    conflict_cols <- which(avail_matrix[i, ])
-    if (length(conflict_cols) > 0) {
-      for (j in conflict_cols) {
-        st <- used_station[j]
-        if (!is.na(st)) {
-          avail_veh[st] <- avail_veh[st] - 1
-          busy_count[st] <- busy_count[st] + 1
-        }
-      }
-    }
-    
-    # choose station with lowest (ETT + λ * load penalty)
-    best_station <- NA
-    best_score <- Inf
-    
-    for (st in names(scenario_caps)) {
-      if (avail_veh[st] > 0) {
-        ett_val <- x[[ett_map[st]]][i]
-        
-        # load penalty = fraction busy at that station
-        load_penalty <- busy_count[st] / scenario_caps[st]
-        
-        # combined score
-        score <- ett_val + lambda * (load_penalty * mean(unlist(x[ett_map]), na.rm = TRUE))
-        # scale penalty roughly to seconds
-        if (score < best_score) {
-          best_score <- score
-          best_station <- st
-        }
-      }
-    }
-    
-    used_station[i] <- best_station
-    dispatch_ett[i] <- x[[ett_map[best_station]]][i]
-  }
-  
-  x[[paste0(label, "_station")]] <- used_station
-  x[[paste0(label, "_ETT_DISPATCH")]] <- dispatch_ett
-  return(x)
-}
-
-```
-
-```{r}
-# Station → ETT column mapping
-ett_map <- c(South="eTT.BG.So", Central="eTT.BG.Ce", NN="eTT.BG.NN", FN="eTT.BG.FN")
-
-# Define scenarios (capacities per station)
-S0_caps <- c(South=1, Central=3, NN=0, FN=0)
-S1_caps <- c(South=0, Central=3, NN=1, FN=0)
-S2_caps <- c(South=0, Central=3, NN=0, FN=1)
-S3_caps <- c(South=1, Central=2, NN=1, FN=0)
-S4_caps <- c(South=1, Central=2, NN=0, FN=1)
-
-x2 <- x |> arrange(DT.DISP)
-
-# Apply
-x2 <- dispatch_scenario2(x2, avail_matrix, S0_caps, ett_map, "S0")
-x2 <- dispatch_scenario2(x2, avail_matrix, S1_caps, ett_map, "S1")
-x2 <- dispatch_scenario2(x2, avail_matrix, S2_caps, ett_map, "S2")
-x2 <- dispatch_scenario2(x2, avail_matrix, S3_caps, ett_map, "S3")
-x2 <- dispatch_scenario2(x2, avail_matrix, S4_caps, ett_map, "S4")
-
-plot_data2 <- x2 |>
-  pivot_longer(cols = starts_with("S") & ends_with("ETT_DISPATCH"),
-               names_to = "Scenario",
-               values_to = "ETT") |>
-  mutate(ETT_min = ETT / 60)
-
-plot_data2 <- plot_data2 |>
-  mutate(
-    DelayGroup = cut(
-      ETT_min,
-      breaks = c(-Inf, 6, 9, 15, Inf),
-      labels = c("0–6 min", "7–9 min", "10–15 min", ">15 min")
-    )
-  )
-
-counts2 <- plot_data2 |>
-  group_by(Scenario, DelayGroup) |>
-  summarise(N = n(), .groups = "drop")
-
-```
-
-```{r}
-
-counts2$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
-
-ggplot(counts2, aes(x = DelayGroup, y = N, fill = Scenario)) +
-  geom_col(position = "dodge") +
-  scale_fill_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Counts of Dispatch Rule 2 Delays by Scenario",
-       x = "Delay Interval", y = "Number of Calls",
-       fill = "Scenario") +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "bottom",
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
-
-ggplot(counts2, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 3) +
-  scale_color_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Dispatch Rule 2 Delay Counts by Scenario",
-       x = "Delay Interval",
-       y = "Number of Calls",
-       color = "Scenario") +
-  theme_minimal(base_size = 14) +
-  theme(
-    legend.position = "bottom",
-    legend.title = element_text(size = 12),
-    legend.text = element_text(size = 11),
-    plot.title = element_text(face = "bold", hjust = 0.5)
-  )
-```
-
 ## Mapping Plots
 
 ```{r}
@@ -574,27 +443,13 @@ ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 3
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
 
-# Modeling Dispatch Rule 1
+# Modeling
 
 ```{r}
-x_modified <- x |>
-  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
 x <- x |>
   mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
 
-# Hierarchical LMM
-library(lme4)
-lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x)
-summary(lme.out)
-
-# GLS
-#library(nlme)
-#gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|REF.GRID),data=x_modified)
-#summary(gls.out)
-```
-
-```{r}
 x<-x|>
   mutate(region_category= case_when(
     REF.GRID== "1 North"~"North",
@@ -602,80 +457,350 @@ x<-x|>
     REF.GRID =="3 South"~"South"
 ))
 
+# Hierarchical LMM
+library(lme4)
+lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x)
+summary(lme.out)
+
+
 #GLS
 library(nlme)
 gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x, na.action=na.omit)
 summary(gls.out)
-
-#par(mfrow=c(1,2),las=1)
-#qqnorm(residuals(lme.out),main="Residuals")
-#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
 ```
 
 ```{r}
-df_model <- x |>
-  select(S0_station, S0_ETT_DISPATCH, 
-         S1_station, S1_ETT_DISPATCH, 
-         S2_station, S2_ETT_DISPATCH, 
-         S3_station, S3_ETT_DISPATCH,
-         S4_station, S4_ETT_DISPATCH,
-         REF.GRID) |>
-  mutate(ID = row_number()) |>
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(lme4)
+library(emmeans)
+
+model_df <- x |>
+  transmute(
+    row_val = row_number(),region_category, DISPATCH.PRIORITY.NAME,
+    across(matches("^S\\d+_ETT_DISPATCH$"))
+  ) |>
   pivot_longer(
-    cols = matches("S\\d+_"), 
-    names_to = c("Scenario", ".value"),
-    names_pattern = "(S\\d+)_(.*)"
+    cols = matches("^S\\d+_ETT_DISPATCH$"),
+    names_to = "Scenario",
+    values_to = "ETT_sec"
+  ) |>
+  dplyr::mutate(
+    Scenario        = str_remove(Scenario, "_ETT_DISPATCH$"),
+    Scenario        = factor(Scenario),
+    region_category = factor(region_category),
+    ETT_min         = ETT_sec / 60
   )
 
-df_model <- df_model |>
-  group_by(ID) |>
+model_df <- model_df |>
+  group_by(row_val) |>
   mutate(
-    change_flag = (max(ETT_DISPATCH) != min(ETT_DISPATCH))  # TRUE if not all equal
+    change_flag = (max(ETT_sec) != min(ETT_sec))  # TRUE if not all equal
   ) |>
   ungroup()
-
-# logistic model
-model_logit <- glm(change_flag ~ REF.GRID, 
-                   data = df_model, 
-                   family = binomial)
-summary(model_logit)
-
-# lmm model
-df_changed <- df_model |> filter(change_flag)
-model_lmm <- lmer(ETT_DISPATCH ~ Scenario + (1|ID), data = df_changed)
-summary(model_lmm)
 ```
 
-# Modeling Dispatch Rule 2
+## Logistic Regression
 
 ```{r}
+# logistic model
+model_logit <- glm(change_flag ~ region_category + DISPATCH.PRIORITY.NAME, 
+                   data = model_df, 
+                   family = binomial)
+summary(model_logit)
+```
 
+## LMM
 
-x2 <- x2 |>
-  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+```{r}
+library(lmerTest)
 
-# Hierarchical LMM 
-library(lme4)
-lme.out<-lmer(obsTTmodified~(1|REF.GRID)+DISPATCH.PRIORITY.NAME,data=x2)
-summary(lme.out)
+lmm_model <- lmer(
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME + (1 | row_val),
+  data = model_df
+)
+summary(lmm_model)
+```
 
+```{r}
+model_df$fitted <- fitted(lmm_model)
+model_df$resid  <- resid(lmm_model)
 
-x2<-x2|>mutate(region_category= case_when(
+ggplot(model_df, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
 
-  REF.GRID== "1 North"~"North",
-  REF.GRID=="2 Central"~"Central",
-  REF.GRID =="3 South"~"South"
-  
-))
+ggplot(model_df, aes(x = Scenario, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
 
+ggplot(model_df, aes(x = region_category, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
 
-#GLS
+hist(model_df$ETT_sec, breaks = 50)
+hist(log(model_df$ETT_sec), breaks = 50)
+
+# Residuals Q-Q plot
+qqnorm(residuals(lmm_model), main = "Residuals")
+qqline(residuals(lmm_model), col = "red")
+
+# Random effects Q-Q plot
+qqnorm(unlist(ranef(lmm_model)$row_val), main = "Random Effects")
+qqline(unlist(ranef(lmm_model)$row_val), col = "red")
+```
+
+### Only calls with different ETT across scenarios
+
+```{r}
+changed_df <- model_df |> filter(change_flag)
+
+lmm_model_changed <- lmer(
+  ETT_sec ~ Scenario + region_category + DISPATCH.PRIORITY.NAME + (1 | row_val),
+  data = changed_df
+)
+summary(lmm_model_changed)
+
+changed_df$fitted <- fitted(lmm_model_changed)
+changed_df$resid  <- resid(lmm_model_changed)
+
+ggplot(changed_df, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
+
+ggplot(changed_df, aes(x = Scenario, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
+
+ggplot(changed_df, aes(x = region_category, y = resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
+
+qqnorm(resid(lmm_model_changed))
+qqline(resid(lmm_model_changed), col = "red")
+
+hist(changed_df$ETT_sec, breaks = 50)
+```
+
+## GLS
+
+```{r}
 library(nlme)
-gls.out<-nlme::gls(obsTTmodified~DISPATCH.PRIORITY.NAME,corr=corCompSymm(value=0.5,form=~1|region_category),data=x2, na.action=na.omit)
-summary(gls.out)
 
-#par(mfrow=c(1,2),las=1)
-#qqnorm(residuals(lme.out),main="Residuals")
-#qqnorm(unlist(ranef(lme.out)$region_category),main="Random Effects")
+gls_model <- gls(
+  ETT_sec ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df
+)
 
+model_df$gls_fitted <- fitted(gls_model)
+model_df$gls_resid  <- resid(gls_model)
+
+ggplot(model_df, aes(x = gls_fitted, y = gls_resid)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted",
+       x = "Fitted values",
+       y = "Residuals")
+
+ggplot(model_df, aes(x = Scenario, y = gls_resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Scenario",
+       x = "Scenario", y = "Residuals")
+
+ggplot(model_df, aes(x = region_category, y = gls_resid)) +
+  geom_boxplot() +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals")
+
+qqnorm(resid(gls_model))
+qqline(resid(gls_model), col = "red")
+```
+
+```{r}
+gls_model_region <- gls(
+  ETT_sec ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df, method = "REML",
+  weights = varIdent(form = ~ 1 | region_category)
+)
+
+anova(gls_model, gls_model_region)
+```
+
+```{r}
+gls_model_pow <- gls(
+  ETT_sec ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  data = model_df, method = "REML",
+  weights = varPower(form = ~ fitted(.))   # variance ∝ mean^δ
+)
+
+anova(gls_model, gls_model_pow)
+```
+
+## Anova between GLS and LMM
+
+```{r}
+#anova gls and original lmm
+anova(lmm_model,gls_model)
+AIC(lmm_model,gls_model)
+BIC(lmm_model,gls_model)
+
+#anova gls_model_pow and original lmm
+anova(lmm_model,gls_model_pow)
+AIC(lmm_model,gls_model_pow)
+BIC(lmm_model,gls_model_pow)
+
+
+#anova gls and lmm_model changed
+anova(lmm_model_changed,gls_model)
+AIC(lmm_model_changed,gls_model)
+BIC(lmm_model_changed,gls_model)
+
+#anova gls_model_pow and lmm_model_changed
+anova(lmm_model_changed,gls_model_pow)
+AIC(lmm_model_changed,gls_model_pow)
+BIC(lmm_model_changed,gls_model_pow)
+
+```
+
+
+
+
+## Extended LMMs setup for comparing
+
+```{r}
+library(nlme)
+
+lmm_model_ext <- lme(
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,                           # random intercept per call
+  weights = varIdent(form = ~1 | region_category), # different variance per region
+  data = model_df
+)
+
+# Residuals Q-Q plot
+qqnorm(residuals(lmm_model_ext), main = "Residuals")
+qqline(residuals(lmm_model_ext), col = "red")
+
+# Random effects Q-Q plot
+re <- ranef(lmm_model_ext)
+qqnorm(re[,1], main = "Random Effects")
+qqline(re[,1], col = "red")
+
+lmm_no_weights <- lme(
+  log(ETT_sec) ~ Scenario + region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,
+  data = model_df
+)
+
+
+lmm_interaction<-lme(
+  log(ETT_sec) ~ Scenario*region_category + DISPATCH.PRIORITY.NAME,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
+lmm_no_dispatch_name_no_interaction<-lme(
+  log(ETT_sec) ~ Scenario+ region_category,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
+lmm_no_dispatch_name_interaction<-lme(
+  log(ETT_sec) ~ Scenario*region_category,
+  random = ~1 | row_val,                           
+  weights = varIdent(form = ~1 | region_category), 
+  data = model_df
+)
+
+anova(lmm_no_weights, lmm_model_ext)
+```
+
+
+## (IMPORTANT PLEASE CHECK) AIC and BIC across LMM models
+```{r}
+AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+```
+
+
+
+
+# Evaluate benefits
+
+## Emmeans
+
+```{r}
+# overall optimal emmeans scenario
+emmeans_overall <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario)
+opt_overall <- as.data.frame(emmeans_overall) |> slice_min(emmean, n = 1)
+cat("Overall optimal scenario:\n"); print(opt_overall)
+
+# optimal scenario by region
+emmeans_region <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario | region_category)
+opt_by_region <- as.data.frame(emmeans_region) |>
+ group_by(region_category) |>
+ slice_min(emmean, n = 1) |>
+ ungroup()
+cat("\nBy region optimal scenario:\n"); print(opt_by_region)
+```
+
+## Frequency with which the ambulance at the closest station is available
+
+```{r}
+x <- x |>
+  mutate(
+    S0_closest_avail = (S0_ETT_DISPATCH == S0),
+    S1_closest_avail = (S1_ETT_DISPATCH == S1),
+    S2_closest_avail = (S2_ETT_DISPATCH == S2),
+    S3_closest_avail = (S3_ETT_DISPATCH == S3),
+    S4_closest_avail = (S4_ETT_DISPATCH == S4)
+  )
+
+closest_summary <- x |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_summary
+
+closest_by_region <- x |> 
+  group_by(REF.GRID) |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_by_region
+
+closest_by_priority <- x |> 
+  group_by(DISPATCH.PRIORITY.NAME) |>
+  summarise(
+    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
+    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
+    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
+    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
+    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
+  )
+
+closest_by_priority
 ```
