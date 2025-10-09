@@ -733,10 +733,14 @@ anova(lmm_no_weights, lmm_model_ext)
 ```{r}
 library(kableExtra)
 aic_table<-AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
-bic_table<-BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+min_aic<-which.min(aic_table$AIC)
 
-kable(aic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
-kable(bic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+bic_table<-BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
+min_bic<-which.min(bic_table$BIC)
+
+
+kable(aic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min_aic, bold = TRUE, color = "white", background = "#1976D2")
+kable(bic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min_bic, bold = TRUE, color = "white", background = "#1976D2")
 
 
 ```
