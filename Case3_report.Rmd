@@ -309,4 +309,21 @@ summary(within_region)
 
 
 ```
+```{r}
+# percent change between scenarios using emmeans
+
+
+model_lmm_log<- lme(log(ETT_sec) ~ Scenario * region,
+  random = ~1 | row_val,
+  weights = varIdent(form = ~1 | region),
+  data = changed_df,
+  method="REML"
+)
+
+emmeans_log_lmm<- emmeans(model_lmm_log,~Scenario|region)
+
+emmeans_log_lmm
+
+
+```
 
