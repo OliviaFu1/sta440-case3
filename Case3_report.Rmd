@@ -327,3 +327,67 @@ emmeans_log_lmm
 
 ```
 
+## Emmeans
+
+```{r}
+
+library(kableExtra)
+# overall optimal emmeans scenario
+emmeans_overall <- emmeans(model_lmm, ~ Scenario)
+opt_overall <- as.data.frame(emmeans_overall) 
+min<-which.min(opt_overall$emmean)
+#slice_min(emmean, n = 1)
+#cat("Overall optimal scenario:\n"); print(opt_overall)
+kable(opt_overall)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
+
+# optimal scenario by region
+emmeans_region <- emmeans(model_lmm, ~ Scenario | region)
+opt_by_region <- as.data.frame(emmeans_region) |>
+ group_by(region) 
+#min<-which.min(opt_by_region$emmean)
+ #slice_min(emmean, n = 1) |>
+ #ungroup()
+#cat("\nBy region optimal scenario:\n"); print(opt_by_region)
+kable(opt_by_region)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+##|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
+```
+
+
+## Emmeans with contrasts
+```{r,eval=FALSE}
+library(emmeans)
+library(dplyr)
+library(kableExtra)
+
+
+# overall contrasts
+overall_contrasts <- contrast(
+  emmeans_overall,
+  method = "trt.vs.ctrl",
+  ref = which(levels(emmeans_overall)$Scenario == "S0")  
+)
+
+overall_contrasts_summary <- summary(overall_contrasts, infer = TRUE, adjust = "dunnett") |>
+  as.data.frame() |>
+  select(contrast, estimate, SE, df, t.ratio, p.value)
+
+#cat("\nOverall contrasts (S1..S4 vs S0):\n"); print(overall_contrasts_summary)
+kable(overall_contrasts_summary)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+
+
+# region by region contrasts
+region_contrasts <- contrast(
+  emmeans_region,
+  method = "trt.vs.ctrl",
+  ref = which(levels(emmeans_region)$Scenario == "S0")
+)
+
+region_contrasts_summary <- summary(region_contrasts, infer = TRUE, adjust = "dunnett") |>
+  as.data.frame() |>
+  select(region_category, contrast, estimate, SE, df, t.ratio, p.value) |>
+  arrange(region_category, contrast)
+
+#cat("\nRegion by region contrasts (S1..S4 vs S0):\n"); print(region_contrasts_summary)
+kable(region_contrasts_summary)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
+
+```
