@@ -1,40 +1,73 @@
 ---
-title: "case3_code"
-format: html
-editor: visual
+title: "Sta 440 Case 3"
+author: "Srika Gopal, Olivia Fu, Steph Reinke"
+date: "October 2025"
+format: 
+  pdf:
+    documentclass: article
+    fontsize: 11pt
+geometry: margin=1in
+execute: 
+  warning: false
+  message: false
+  echo: false
 ---
 
-# Data
+
+# 1. Background
+
+Emergency medical service (EMS) response times can drastically impact patient outcomes. Vance County, North Carolina is a growing county that is interested in evaluating their current EMS ambulance placements. The county has three major regions, the North, Central, and the South. The population is mostly concentrated in the city of Henderson, located in the Central region. There are currently 2 EMS stations, 1 in the South, and 1 in Central. The southern station has 1 ambulance, and the central station has 3. The north does not currently have a station. Thus Vance County is interested in exploring if moving an ambulance to the North would be beneficial. Finding the optimal locations for ambulances is vital because in the medical world EMS arriving seconds earlier can be the difference between life and death. 
+
+**Research question:** Where should the ambulances be stationed to best serve Vance county?
 
 ```{r}
+#| label: packages
+
 library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+
 ```
 
+
+
+# 2. Data and Model Fit 
+
 ```{r}
+#| label: read_data
+
 load("./emsData.RData")
+
 ```
 
-# EDA
+EMS calls with HIPAA protected details 
+Each row is a call including:
+Arrival, dispatch, and enroute times
+Region and modified date
+Google Maps travel times from proposed and existing stations
+
 
 ```{r}
+#| label: data
+
 # remove duplicated entries of the same call
 # 5 duplicates
 x <- x |>
   distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
+
 ```
 
-## Problem in North
-
 ```{r}
+#| label: problems_in_north
+
 x |>
   mutate(travelTime = DT.ARRIVE - DT.ENROUTE) |>
   ggplot(aes(x = travelTime)) +
   facet_wrap(~REF.GRID) +
   geom_histogram(bins = 25) +
   theme_minimal()
+
 ```
 
 ```{r}
@@ -63,9 +96,11 @@ ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot
 
 ```
 
-## Actual vs. Estimated
+
 
 ```{r}
+#| label: estmiated_vs_actual
+
 x <- x |>
   mutate(
     # actual observed time
@@ -93,6 +128,7 @@ x <- x |>
       TRUE ~ NA_real_
     )
   )
+
 ```
 
 ```{r}
@@ -145,9 +181,11 @@ ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
   theme_minimal()
 ```
 
-## Comparing scenarios
+
 
 ```{r}
+#| label: comparing_scenarios
+
 # S0: Central + South
 x$S0 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, na.rm = TRUE)
 
@@ -162,6 +200,7 @@ x$S3 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.NN, na.rm = TRUE)
 
 # S4: Central + South + Far North
 x$S4 <- pmin(x$eTT.BG.Ce, x$eTT.BG.So, x$eTT.BG.FN, na.rm = TRUE)
+
 ```
 
 ```{r}
@@ -187,15 +226,16 @@ ggplot(shortest_ett, aes(x = time)) +
   facet_wrap(~scenario)
 ```
 
-### Consider System load (dispatch rule)
-
 ```{r}
+#| label: consider_load_dispatch
+
 # order in dispatch time
 x <- x |> arrange(DT.DISP)
 
 # build availability matrix
 avail_matrix <- outer(x$DT.DISP, x$DT.AVAILABLE, FUN = "<")
 avail_matrix[upper.tri(avail_matrix, diag = TRUE)] <- FALSE
+
 ```
 
 ```{r}
@@ -340,9 +380,9 @@ ggplot(counts, aes(x = DelayGroup, y = N, color = Scenario, group = Scenario)) +
   )
 ```
 
-## Mapping Plots
-
 ```{r}
+#| label: map_plots
+
 library(sf)
 library(ggplot2)
 library (dplyr)
@@ -363,13 +403,10 @@ leaflet(x) |>
   addTiles() |> 
   addCircleMarkers(~REF.GPS.LON, ~REF.GPS.LAT, popup = ~as.character(REF.GPS.LON))
 
-
-
 ```
 
-### Static Map Plot
-
 ```{r echo=FALSE}
+#| label: static_map_plot
 
 library(dplyr)
 library(sf)
@@ -404,9 +441,8 @@ ggsave("vance_county_ems_observedtravel.png", plot_save, width = 7, height = 7, 
 
 ```
 
-### Static Map Plot Emergency/Non Emergency
-
 ```{r echo=FALSE}
+#| label: static_map_plot_emergency_vs_non
 
 library(dplyr)
 library(sf)
@@ -437,15 +473,15 @@ plot_save <- ggplot() +
         axis.title = element_blank(), axis.text = element_blank(), axis.ticks = element_blank())
 
 ggsave("vance_county_ems_urgency.png", plot_save, width = 7, height = 7, dpi = 300)
+
 ```
 
 ```{r}
 ggplot(x,aes(x=REF.GRID,fill=DISPATCH.PRIORITY.NAME))+geom_histogram(stat="count",position = "dodge")+labs(title="Emergency/Non-Emergency EMS Calls by Region",x="Region",y="Count",fill="Urgency Level") + theme_minimal()
 ```
 
-# Modeling
-
 ```{r}
+#| label: start_of_modeling
 
 x <- x |>
   mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
@@ -501,19 +537,21 @@ model_df <- model_df |>
   ungroup()
 ```
 
-## Logistic Regression
 
 ```{r}
+#| label: logistic_reg
+
 # logistic model
 model_logit <- glm(change_flag ~ region_category + DISPATCH.PRIORITY.NAME, 
                    data = model_df, 
                    family = binomial)
 summary(model_logit)
+
 ```
 
-## LMM
-
 ```{r}
+#| label: linear_mixed_model
+
 library(lmerTest)
 
 lmm_model <- lmer(
@@ -521,6 +559,7 @@ lmm_model <- lmer(
   data = model_df
 )
 summary(lmm_model)
+
 ```
 
 ```{r}
@@ -556,9 +595,9 @@ qqnorm(unlist(ranef(lmm_model)$row_val), main = "Random Effects")
 qqline(unlist(ranef(lmm_model)$row_val), col = "red")
 ```
 
-### Only calls with different ETT across scenarios
-
 ```{r}
+#| label: only_calls_with_different_ETT_across_scenarios
+
 changed_df <- model_df |> filter(change_flag)
 
 lmm_model_changed <- lmer(
@@ -591,11 +630,12 @@ qqnorm(resid(lmm_model_changed))
 qqline(resid(lmm_model_changed), col = "red")
 
 hist(changed_df$ETT_sec, breaks = 50)
+
 ```
 
-## GLS
-
 ```{r}
+#| label: GLS
+
 library(nlme)
 
 gls_model <- gls(
@@ -647,9 +687,9 @@ gls_model_pow <- gls(
 anova(gls_model, gls_model_pow)
 ```
 
-## Anova between GLS and LMM
-
 ```{r}
+#| label: anova_gls_vs_lmm
+
 #anova gls and original lmm
 anova(lmm_model,gls_model)
 AIC(lmm_model,gls_model)
@@ -673,12 +713,9 @@ BIC(lmm_model_changed,gls_model_pow)
 
 ```
 
-
-
-
-## Extended LMMs setup for comparing
-
 ```{r}
+#| label: setup_for_comparisions
+
 library(nlme)
 
 lmm_model_ext <- lme(
@@ -726,140 +763,32 @@ lmm_no_dispatch_name_interaction<-lme(
 )
 
 anova(lmm_no_weights, lmm_model_ext)
-```
-
-
-## (IMPORTANT PLEASE CHECK) AIC and BIC across LMM models
-```{r}
-library(kableExtra)
-aic_table<-AIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
-min_aic<-which.min(aic_table$AIC)
-
-bic_table<-BIC(lmm_no_weights, lmm_model_ext,lmm_interaction,lmm_no_dispatch_name_no_interaction,lmm_no_dispatch_name_interaction)
-min_bic<-which.min(bic_table$BIC)
-
-
-kable(aic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min_aic, bold = TRUE, color = "white", background = "#1976D2")
-kable(bic_table)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min_bic, bold = TRUE, color = "white", background = "#1976D2")
-
 
 ```
 
 
 
+# 4. Assumptions and Shortcomings\
 
-# Evaluate benefits
-
-## Emmeans
-
-```{r}
-
-library(kableExtra)
-# overall optimal emmeans scenario
-emmeans_overall <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario)
-opt_overall <- as.data.frame(emmeans_overall) 
-min<-which.min(opt_overall$emmean)
-#slice_min(emmean, n = 1)
-#cat("Overall optimal scenario:\n"); print(opt_overall)
-kable(opt_overall)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
-
-# optimal scenario by region
-emmeans_region <- emmeans(lmm_no_dispatch_name_interaction, ~ Scenario | region_category)
-opt_by_region <- as.data.frame(emmeans_region) |>
- group_by(region_category) 
-#min<-which.min(opt_by_region$emmean)
- #slice_min(emmean, n = 1) |>
- #ungroup()
-#cat("\nBy region optimal scenario:\n"); print(opt_by_region)
-kable(opt_by_region)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
-##|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
-```
+Normality of residuals was poorly met 
+Large deviances at tails
+Non-constant variance across fitted values
+External factors not taken into consideration
+Traffic / Rush hours/ Road closures
+Time of year
+EMT staffing patterns
+ETT inputs: based on single best-guess estimates (e.g., from Google), lacking nuance or uncertainty
+Variance modeling: only accounted for regional differences, while other factors may also influence variability
+Emergency vs non-emergency
+Simplicity in Dispatch Rule
+Better for analysis
+Doesn’t occur in real life
 
 
-## Emmeans with contrasts
-```{r}
-library(emmeans)
-library(dplyr)
-library(kableExtra)
+# 5. Conclusions
 
+Scenario 3 results in the fastest overall response times 
+Marginal mean travel times (ETTs) are reduced by ~16% compared with the baseline (Scenario 0)
 
-# overall contrasts
-overall_contrasts <- contrast(
-  emmeans_overall,
-  method = "trt.vs.ctrl",
-  ref = which(levels(emmeans_overall)$Scenario == "S0")  
-)
+exp (−0.173) ≈ 0.84 → travel times in Scenario 3 are about 84% of baseline levels
 
-overall_contrasts_summary <- summary(overall_contrasts, infer = TRUE, adjust = "dunnett") |>
-  as.data.frame() |>
-  select(contrast, estimate, SE, df, t.ratio, p.value)
-
-#cat("\nOverall contrasts (S1..S4 vs S0):\n"); print(overall_contrasts_summary)
-kable(overall_contrasts_summary)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
-
-
-# region by region contrasts
-region_contrasts <- contrast(
-  emmeans_region,
-  method = "trt.vs.ctrl",
-  ref = which(levels(emmeans_region)$Scenario == "S0")
-)
-
-region_contrasts_summary <- summary(region_contrasts, infer = TRUE, adjust = "dunnett") |>
-  as.data.frame() |>
-  select(region_category, contrast, estimate, SE, df, t.ratio, p.value) |>
-  arrange(region_category, contrast)
-
-#cat("\nRegion by region contrasts (S1..S4 vs S0):\n"); print(region_contrasts_summary)
-kable(region_contrasts_summary)|>kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed"))
-
-```
-
-
-## Frequency with which the ambulance at the closest station is available
-
-```{r}
-x <- x |>
-  mutate(
-    S0_closest_avail = (S0_ETT_DISPATCH == S0),
-    S1_closest_avail = (S1_ETT_DISPATCH == S1),
-    S2_closest_avail = (S2_ETT_DISPATCH == S2),
-    S3_closest_avail = (S3_ETT_DISPATCH == S3),
-    S4_closest_avail = (S4_ETT_DISPATCH == S4)
-  )
-
-closest_summary <- x |>
-  summarise(
-    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
-    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
-    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
-    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
-    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
-  )
-
-closest_summary
-
-closest_by_region <- x |> 
-  group_by(REF.GRID) |>
-  summarise(
-    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
-    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
-    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
-    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
-    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
-  )
-
-closest_by_region
-
-closest_by_priority <- x |> 
-  group_by(DISPATCH.PRIORITY.NAME) |>
-  summarise(
-    S0_freq = mean(S0_closest_avail, na.rm = TRUE),
-    S1_freq = mean(S1_closest_avail, na.rm = TRUE),
-    S2_freq = mean(S2_closest_avail, na.rm = TRUE),
-    S3_freq = mean(S3_closest_avail, na.rm = TRUE),
-    S4_freq = mean(S4_closest_avail, na.rm = TRUE)
-  )
-
-closest_by_priority
-```
