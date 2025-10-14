@@ -288,3 +288,25 @@ p4 <- ggplot(changed_df, aes(x = region, y = resid_nor)) +
 
 p3 + p4
 ```
+
+```{r}
+# standard emmeans
+
+emmeans_by_region<- emmeans(model_lmm, ~Scenario|region)
+
+# comparing within region
+within_region<- pairs(emmeans_by_region, adjust="tukey")
+
+# compare within region to s0
+
+##region_to_s0<- contrast(emmeans_by_region, method= "trt.vs.ctrl",ref="S0")
+
+summary(emmeans_by_region)
+summary(within_region)
+##summary(region_to_s0)
+
+                      
+
+
+```
+
