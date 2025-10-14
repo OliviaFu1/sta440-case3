@@ -13,10 +13,15 @@ execute:
   echo: false
 ---
 
-
 # 1. Background
 
-Emergency medical service (EMS) response times can drastically impact patient outcomes. Vance County, North Carolina is a growing county that is interested in evaluating their current EMS ambulance placements. The county has three major regions, the North, Central, and the South. The population is mostly concentrated in the city of Henderson, located in the Central region. There are currently 2 EMS stations, 1 in the South, and 1 in Central. The southern station has 1 ambulance, and the central station has 3. The north does not currently have a station. Thus Vance County is interested in exploring if moving an ambulance to the North would be beneficial. Finding the optimal locations for ambulances is vital because in the medical world EMS arriving seconds earlier can be the difference between life and death. 
+Emergency medical service (EMS) response times can drastically impact patient outcomes. Vance County, North Carolina is a growing county that is interested in evaluating their current EMS ambulance placements. The county has three major regions, the North, Central, and the South. The population is mostly concentrated in the city of Henderson, located in the Central region. There are currently 2 EMS stations, 1 in the South, and 1 in Central. The southern station has 1 ambulance, and the central station has 3. The North does not currently have a station. Thus Vance County is interested in exploring if moving an ambulance to the North would be beneficial. There are two potential locations for an ambulance to be stationed in the North: the Near North and the Far North. We were given five scenarios for ambulance placement:
+
+-   Scenario 0: 1 in South, 3 in Central (Current Placement)
+-   Scenario 1: 0 in South, 3 in Central, 1 in Near North
+-   Scenario 2: 0 in South, 3 in Central, 1 in Far North
+-   Scenario 3: 1 in South, 2 in Central, 1 in Near North
+-   Scenario 4: 1 in South, 2 in Central, 1 in Far North
 
 **Research question:** Where should the ambulances be stationed to best serve Vance county?
 
@@ -30,9 +35,9 @@ library(tidyr)
 
 ```
 
+# 2. Data and Model Fit
 
-
-# 2. Data and Model Fit 
+To answer this question we examined a dataset with real EMS call data. Select information was withheld or changed, such as dates and addresses for HIPAA compliance. However for the purposes of our analysis those changes are not relevant. The data has information for each call and API pulled travel times from Google Maps. We were provided with four types of estimates from Google Maps (best guess, optimistic, pessimistic, and unadjusted) for each  station including the two proposed Northern stations to each call.  
 
 ```{r}
 #| label: read_data
@@ -40,13 +45,6 @@ library(tidyr)
 load("./emsData.RData")
 
 ```
-
-EMS calls with HIPAA protected details 
-Each row is a call including:
-Arrival, dispatch, and enroute times
-Region and modified date
-Google Maps travel times from proposed and existing stations
-
 
 ```{r}
 #| label: data
@@ -95,8 +93,6 @@ ggplot(x,aes(x=atHospitalDur,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxp
 ggplot(x,aes(x=observedTT,y=REF.GRID,color=DISPATCH.PRIORITY.NAME))+geom_boxplot()
 
 ```
-
-
 
 ```{r}
 #| label: estmiated_vs_actual
@@ -180,8 +176,6 @@ ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
   ) +
   theme_minimal()
 ```
-
-
 
 ```{r}
 #| label: comparing_scenarios
@@ -512,7 +506,6 @@ model_df <- model_df |>
   ungroup()
 ```
 
-
 ```{r}
 #| label: logistic_reg
 
@@ -741,29 +734,12 @@ anova(lmm_no_weights, lmm_model_ext)
 
 ```
 
+# 4. Assumptions and Shortcomings
 
-
-# 4. Assumptions and Shortcomings\
-
-Normality of residuals was poorly met 
-Large deviances at tails
-Non-constant variance across fitted values
-External factors not taken into consideration
-Traffic / Rush hours/ Road closures
-Time of year
-EMT staffing patterns
-ETT inputs: based on single best-guess estimates (e.g., from Google), lacking nuance or uncertainty
-Variance modeling: only accounted for regional differences, while other factors may also influence variability
-Emergency vs non-emergency
-Simplicity in Dispatch Rule
-Better for analysis
-Doesn’t occur in real life
-
+Normality of residuals was poorly met Large deviances at tails Non-constant variance across fitted values External factors not taken into consideration Traffic / Rush hours/ Road closures Time of year EMT staffing patterns ETT inputs: based on single best-guess estimates (e.g., from Google), lacking nuance or uncertainty Variance modeling: only accounted for regional differences, while other factors may also influence variability Emergency vs non-emergency Simplicity in Dispatch Rule Better for analysis Doesn’t occur in real life
 
 # 5. Conclusions
 
-Scenario 3 results in the fastest overall response times 
-Marginal mean travel times (ETTs) are reduced by ~16% compared with the baseline (Scenario 0)
+Scenario 3 results in the fastest overall response times Marginal mean travel times (ETTs) are reduced by \~16% compared with the baseline (Scenario 0)
 
 exp (−0.173) ≈ 0.84 → travel times in Scenario 3 are about 84% of baseline levels
-
