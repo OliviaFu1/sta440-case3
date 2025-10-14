@@ -359,6 +359,8 @@ library(emmeans)
 library(dplyr)
 library(kableExtra)
 
+levels(emmeans_overall)
+
 
 # overall contrasts
 overall_contrasts <- contrast(
