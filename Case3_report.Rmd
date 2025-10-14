@@ -34,19 +34,257 @@ editor: visual
 # Appendix
 
 ```{r include=FALSE}
-
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(viridis)
+library(stringr)
+library(lme4)
+library(emmeans)
+library(kableExtra)
+library(broom)
+library(nlme)
+library(patchwork)
 
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 ```
 
 ```{r load-data}
-
+load("./emsData.RData")
 ```
 
 ```{r clean-data}
+# remove duplicated entries of the same call (5 duplicates)
+x <- x |>
+  distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
+```
+
+```{r map-intial-eda}
 
 ```
 
-```{r fig-1, fig.cap=""}
+```{r compare-ett}
 
+```
+
+```{r dispatch-rule}
+
+# order in dispatch time
+x <- x |> arrange(DT.DISP)
+
+# build availability matrix
+avail_matrix <- outer(x$DT.DISP, x$DT.AVAILABLE, FUN = "<")
+avail_matrix[upper.tri(avail_matrix, diag = TRUE)] <- FALSE
+
+dispatch_scenario <- function(x, avail_matrix, scenario_caps, ett_map, label) {
+  # scenario_caps: named vector of capacities, e.g. c(South=1, Central=3, NN=2)
+  # ett_map: named vector of column names in x giving ETTs for each station
+  
+  n_calls <- nrow(x)
+  used_station <- rep(NA_character_, n_calls)
+  dispatch_ett <- rep(NA_real_, n_calls)
+  
+  for (i in seq_len(n_calls)) {
+    # reset station availability for this call
+    avail_veh <- scenario_caps
+    
+    # check conflicts with earlier calls
+    conflict_cols <- which(avail_matrix[i, ])
+    if (length(conflict_cols) > 0) {
+      for (j in conflict_cols) {
+        st <- used_station[j]
+        if (!is.na(st)) {
+          avail_veh[st] <- avail_veh[st] - 1
+        }
+      }
+    }
+    
+    # choose station with shortest ETT among those with capacity left
+    min_ett <- Inf
+    best_station <- NA
+    
+    for (st in names(scenario_caps)) {
+      if (avail_veh[st] > 0) {
+        ett_val <- x[[ett_map[st]]][i]
+        if (ett_val < min_ett) {
+          min_ett <- ett_val
+          best_station <- st
+        }
+      }
+    }
+    
+    used_station[i] <- best_station
+    dispatch_ett[i] <- min_ett
+  }
+  
+  x[[paste0(label, "_station")]] <- used_station
+  x[[paste0(label, "_ETT_DISPATCH")]] <- dispatch_ett
+  return(x)
+}
+
+# Station → ETT column mapping
+ett_map <- c(South="eTT.BG.So", Central="eTT.BG.Ce", NN="eTT.BG.NN", FN="eTT.BG.FN")
+
+# Define scenarios (capacities per station)
+S0_caps <- c(South=1, Central=3, NN=0, FN=0)
+S1_caps <- c(South=0, Central=3, NN=1, FN=0)
+S2_caps <- c(South=0, Central=3, NN=0, FN=1)
+S3_caps <- c(South=1, Central=2, NN=1, FN=0)
+S4_caps <- c(South=1, Central=2, NN=0, FN=1)
+
+# Apply
+x <- dispatch_scenario(x, avail_matrix, S0_caps, ett_map, "S0")
+x <- dispatch_scenario(x, avail_matrix, S1_caps, ett_map, "S1")
+x <- dispatch_scenario(x, avail_matrix, S2_caps, ett_map, "S2")
+x <- dispatch_scenario(x, avail_matrix, S3_caps, ett_map, "S3")
+x <- dispatch_scenario(x, avail_matrix, S4_caps, ett_map, "S4")
+```
+
+```{r}
+plot_data <- x |>
+  pivot_longer(cols = starts_with("S") & ends_with("ETT_DISPATCH"),
+               names_to = "Scenario",
+               values_to = "ETT") |>
+  mutate(ETT_min = ETT / 60,
+         DelayGroup = cut(
+           ETT_min,
+           breaks = c(-Inf, 6, 9, 15, Inf),
+           labels = c("0–6 min", "7–9 min", "10–15 min", ">15 min")))
+
+counts <- plot_data |>
+  group_by(Scenario, DelayGroup) |>
+  summarise(N = n(), .groups = "drop")
+```
+
+```{r fig-1, fig.cap="CAPTION"}
+counts$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
+
+ggplot(counts, aes(x = DelayGroup, y = N, fill = Scenario)) +
+  geom_col(position = "dodge") +
+  scale_fill_viridis_d(option = "D", end = 0.9) +
+  labs(title = "Counts of Dispatch Delays by Scenario",
+       x = "Delay Interval", y = "Number of Calls",
+       fill = "Scenario") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(face = "bold", hjust = 0.5)
+  )
+```
+
+```{r model-df}
+
+x <- x |>
+  mutate(region = case_when(
+    REF.GRID == "1 North"~"North",
+    REF.GRID =="2 Central"~"Central",
+    REF.GRID =="3 South"~"South"
+))
+
+model_df <- x |>
+  transmute(
+    row_val = row_number(), region, DISPATCH.PRIORITY.NAME,
+    across(matches("^S\\d+_ETT_DISPATCH$"))
+  ) |>
+  pivot_longer(
+    cols = matches("^S\\d+_ETT_DISPATCH$"),
+    names_to = "Scenario",
+    values_to = "ETT_sec"
+  ) |>
+  mutate(
+    Scenario = str_remove(Scenario, "_ETT_DISPATCH$"),
+    Scenario = factor(Scenario),
+    region = factor(region))
+
+# check if each row differs from baseline
+model_df <- model_df |>
+  group_by(row_val) |>
+  mutate(
+    base_ETT = ETT_sec[Scenario == "S0"][1],
+    change_flag = ETT_sec != base_ETT
+  ) |>
+  ungroup() |>
+  filter(Scenario != "S0")
+```
+
+```{r logistic-model}
+model_logit <- glm(change_flag ~ Scenario,
+                   data = model_df, 
+                   family = binomial)
+kable(
+  tidy(model_logit, conf.int = TRUE, conf.level = 0.95),
+  digits = 3,
+  caption = "CAPTION"
+) |> 
+  kable_styling(latex_options = "HOLD_position")
+
+new_data <- data.frame(
+  Scenario = c("S1", "S2", "S3", "S4")
+)
+
+new_data$predicted_prob <- predict(model_logit, newdata = new_data, type = "response")
+
+kable(new_data, digits = 3, caption = "CAPTION") |> 
+  kable_styling(latex_options = "HOLD_position")
+```
+
+```{r lmm}
+changed_df <- model_df |> filter(change_flag)
+
+model_lmm <- lme(
+  ETT_sec ~ Scenario * region,
+  random = ~1 | row_val,
+  weights = varIdent(form = ~1 | region),
+  data = changed_df
+)
+```
+
+```{r}
+# Residuals Q-Q plot
+qqnorm(residuals(model_lmm), main = "Residuals")
+qqline(residuals(model_lmm), col = "red")
+
+# Random effects Q-Q plot
+re <- ranef(model_lmm)
+qqnorm(re[,1], main = "Random Effects")
+qqline(re[,1], col = "red")
+```
+
+```{r}
+changed_df$fitted <- fitted(model_lmm)
+changed_df$resid  <- resid(model_lmm)
+
+p1 <- ggplot(changed_df, aes(x = fitted, y = resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Fitted Values",
+       x = "Fitted values",
+       y = "Residuals") +
+  theme_minimal()
+
+p2 <- ggplot(changed_df, aes(x = Scenario, y = resid)) +
+  geom_boxplot(alpha = 0.5) +
+  theme_minimal() +
+  labs(y = "Residuals", x = "Scenario", title = "Residuals by Scenario")
+
+p3 <- ggplot(changed_df, aes(x = region, y = resid)) +
+  geom_boxplot(alpha = 0.5) +
+  labs(title = "Residuals by Region",
+       x = "Region", y = "Residuals") +
+  theme_minimal()
+
+p1 + p2 + p3
+```
+
+```{r}
+changed_df$resid_nor  <- resid(model_lmm, type = "normalized")
+
+p4 <- ggplot(changed_df, aes(x = region, y = resid_nor)) +
+  geom_boxplot(alpha = 0.5) +
+  labs(title = "Normalized Residuals by Region",
+       x = "Region", y = "Residuals") +
+  theme_minimal()
+
+p3 + p4
 ```
