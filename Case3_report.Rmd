@@ -1,0 +1,52 @@
+---
+title: "TITLE"
+author: "Steph Reinke, Olivia Fu, Srika Gopal"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  bookdown::pdf_document2:
+    latex_engine: xelatex
+    toc: false
+  bookdown::html_document2:
+    toc: true
+    number_sections: true
+    fig_caption: true
+editor: visual
+---
+
+# Background and Motivation
+
+# Data and Exploratory Analysis
+
+# Model Rationale, Implementation, and Evaluation
+
+## Rationale & Selection
+
+## Implementation
+
+## Evaluation
+
+# Results
+
+# Limitations and Conclusion
+
+\pagebreak
+
+# Appendix
+
+```{r include=FALSE}
+
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+```{r load-data}
+
+```
+
+```{r clean-data}
+
+```
+
+```{r fig-1, fig.cap=""}
+
+```
