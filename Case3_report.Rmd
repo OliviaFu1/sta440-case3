@@ -233,7 +233,7 @@ kable(new_data, digits = 3, caption = "CAPTION") |>
 changed_df <- model_df |> filter(change_flag)
 
 model_lmm <- lme(
-  ETT_sec ~ Scenario * region,
+  (ETT_sec - base_ETT) ~ Scenario * region,
   random = ~1 | row_val,
   weights = varIdent(form = ~1 | region),
   data = changed_df
@@ -309,6 +309,7 @@ summary(within_region)
 
 
 ```
+
 ```{r}
 # percent change between scenarios using emmeans
 
@@ -352,8 +353,8 @@ kable(opt_by_region)|>kable_styling(full_width = FALSE, bootstrap_options = c("s
 ##|>row_spec(min, bold = TRUE, color = "white", background = "#1976D2")
 ```
 
-
 ## Emmeans with contrasts
+
 ```{r,eval=FALSE}
 library(emmeans)
 library(dplyr)
