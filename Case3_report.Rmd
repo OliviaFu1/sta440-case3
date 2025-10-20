@@ -1,5 +1,5 @@
 ---
-title: "TITLE"
+title: "Case 3: Vance County EMS"
 author: "Steph Reinke, Olivia Fu, Srika Gopal"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
