@@ -295,6 +295,8 @@ ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=DISPATCH.PRIORITY.NAME))+geom_poi
 # effects by category
 
 ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region")
+
+
 ```
 
 
