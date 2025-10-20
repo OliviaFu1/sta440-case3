@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2025.1.9)  20 OCT 2025 15:06
 =======
 This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.1)  20 OCT 2025 15:07
 >>>>>>> d8430f0b78f352bd68163adae63b5395e45d560a
+=======
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.1)  20 OCT 2025 15:30
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -969,8 +973,25 @@ pdf)
 [3]
 File: Case3_report_files/figure-latex/map-intial-eda-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/map-intial-eda-1.pdf>
+File: Case3_report_files/figure-latex/map-intial-eda-2.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/map-intial-eda-2.pdf>
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--165
+[]
+ []
+
 File: Case3_report_files/figure-latex/fig-1-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-1-1.pdf>
+
+
+[4]
+Overfull \vbox (24.78497pt too high) has occurred while \output is active []
+
+
+
+[5]
+
+[6]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
 (Font)              scaled to size 7.0pt on input line 176.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
@@ -1016,11 +1037,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 210--211
 
 
 
-[4]
-
-[5]
-
-[6]
+[7]
 File: Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf>
 File: Case3_report_files/figure-latex/unnamed-chunk-4-2.pdf Graphic file (type pdf)
@@ -1039,18 +1056,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 212--213
 
 
 
-[7]
-
 [8]
 
 [9]
+
+[10]
 File: Case3_report_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-6-1.pdf>
 File: Case3_report_files/figure-latex/unnamed-chunk-6-2.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-6-2.pdf>
 File: Case3_report_files/figure-latex/unnamed-chunk-6-3.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-6-3.pdf>
+<<<<<<< HEAD
 >>>>>>> d8430f0b78f352bd68163adae63b5395e45d560a
+=======
+File: Case3_report_files/figure-latex/unnamed-chunk-6-4.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/unnamed-chunk-6-4.pdf>
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
 
 Underfull \hbox (badness 10000) in paragraph at lines 258--259
 [][]
@@ -1076,7 +1098,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 254--255
 [][]
  []
 
+Underfull \hbox (badness 10000) in paragraph at lines 258--259
+[]
+ []
 
+
+<<<<<<< HEAD
 <<<<<<< HEAD
 Underfull \hbox (badness 10000) in paragraph at lines 254--255
 []
@@ -1085,13 +1112,23 @@ Underfull \hbox (badness 10000) in paragraph at lines 254--255
 [7] [8] [9] (./Case3_report.aux)
 =======
 [10]
+=======
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
 
 [11]
 
 [12]
 
+<<<<<<< HEAD
 [13] (./Case3_report.aux)
 >>>>>>> d8430f0b78f352bd68163adae63b5395e45d560a
+=======
+[13]
+
+[14]
+
+[15] (./Case3_report.aux)
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -1101,6 +1138,7 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
+<<<<<<< HEAD
 <<<<<<< HEAD
  20458 strings out of 474773
  374959 string characters out of 5757725
@@ -1114,11 +1152,19 @@ Output written on Case3_report.pdf (9 pages).
 =======
  20371 strings out of 470396
  371769 string characters out of 5489208
+=======
+ 20389 strings out of 470396
+ 372778 string characters out of 5489208
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
  955053 words of memory out of 5000000
- 48405 multiletter control sequences out of 15000+600000
+ 48421 multiletter control sequences out of 15000+600000
  633334 words of font info for 88 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 90i,9n,114p,1009b,349s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,9n,114p,1009b,377s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
+<<<<<<< HEAD
 Output written on Case3_report.pdf (13 pages).
 >>>>>>> d8430f0b78f352bd68163adae63b5395e45d560a
+=======
+Output written on Case3_report.pdf (15 pages).
+>>>>>>> 2a891046eadeb2a18c487ffff89ef4f34538bd72
