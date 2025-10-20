@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2025.1.9)  20 OCT 2025 16:08
+This is XeTeX, Version 3.141592653-2.6-0.999996 (TeX Live 2024) (preloaded format=xelatex 2025.1.9)  20 OCT 2025 16:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -556,7 +556,7 @@ Package: xurl 2022/01/09 v 0.10 modify URL breaks
 LaTeX Warning: Label `tab:logistic-model' multiply defined.
 
 
-LaTeX Warning: Label `tab:unnamed-chunk-3' multiply defined.
+LaTeX Warning: Label `tab:unnamed-chunk-4' multiply defined.
 
 )
 \openout1 = `Case3_report.aux'.
@@ -939,8 +939,8 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ] [2] [3] [4]
 File: Case3_report_files/figure-latex/fig-1-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-1-1.pdf>
-File: Case3_report_files/figure-latex/fig-4-1.pdf Graphic file (type pdf)
-<use Case3_report_files/figure-latex/fig-4-1.pdf>
+File: Case3_report_files/figure-latex/fig-3-1.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/fig-3-1.pdf>
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
 (Font)              scaled to size 7.0pt on input line 197.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
@@ -957,6 +957,9 @@ LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 (Font)              scaled to size 6.99925pt on input line 197.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(3)/m/n' will be
 (Font)              scaled to size 4.99947pt on input line 197.
+File: Case3_report_files/figure-latex/fig-4-1.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/fig-4-1.pdf>
+[5] [6] [7]
 File: Case3_report_files/figure-latex/fig-5-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-5-1.pdf>
 File: Case3_report_files/figure-latex/fig-6-1.pdf Graphic file (type pdf)
@@ -967,34 +970,9 @@ File: Case3_report_files/figure-latex/fig-8-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-8-1.pdf>
 File: Case3_report_files/figure-latex/fig-9-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-9-1.pdf>
-File: Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type 
-pdf)
-<use Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf>
-File: Case3_report_files/figure-latex/unnamed-chunk-4-2.pdf Graphic file (type 
-pdf)
-<use Case3_report_files/figure-latex/unnamed-chunk-4-2.pdf>
-File: Case3_report_files/figure-latex/unnamed-chunk-4-3.pdf Graphic file (type 
-pdf)
-<use Case3_report_files/figure-latex/unnamed-chunk-4-3.pdf>
-File: Case3_report_files/figure-latex/unnamed-chunk-4-4.pdf Graphic file (type 
-pdf)
-<use Case3_report_files/figure-latex/unnamed-chunk-4-4.pdf>
-
-Underfull \hbox (badness 10000) in paragraph at lines 315--316
-[][]
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 315--316
-[]
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 315--316
-[]
- []
-
-[5] [6] [7] [8] [9] [10] [11] [12] (./Case3_report.aux)
+File: Case3_report_files/figure-latex/fig-10-1.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/fig-10-1.pdf>
+[8] [9] [10] [11] [12] [13] (./Case3_report.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -1004,12 +982,12 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 20485 strings out of 474773
- 375582 string characters out of 5757725
- 1940839 words of memory out of 5000000
- 42322 multiletter control sequences out of 15000+600000
+ 20470 strings out of 474773
+ 374437 string characters out of 5757725
+ 1941839 words of memory out of 5000000
+ 42309 multiletter control sequences out of 15000+600000
  564578 words of font info for 84 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 90i,9n,121p,1009b,342s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,9n,121p,1009b,346s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Case3_report.pdf (12 pages).
+Output written on Case3_report.pdf (13 pages).

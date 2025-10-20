@@ -33,9 +33,9 @@ Emergency medical service (EMS) response times can drastically impact patient ou
 
 To answer this question we examined a dataset with real EMS call data. Select information was withheld or changed, such as dates and addresses for HIPAA compliance. However for the purposes of our analysis those changes are not relevant. The data has information for each call and API pulled travel times from Google Maps. We were provided with four types of estimates from Google Maps (best guess, optimistic, pessimistic, and unadjusted) for each station including the two proposed Northern stations to each call.
 
-We started by exploring the distribution of calls throughout Vance County. We plotted call locations on a map of Vance County and colored the points according to the response time (Figure). The points are densely concentrated in the Central region around the city of Henderson. The points become more sparse the further they are from Henderson, resulting in sparsely concentrated points in the far North and far South. Response times are shorter in the Central region and tend to be longer in the North and the South. 
+We started by exploring the distribution of calls throughout Vance County. We plotted call locations on a map of Vance County and colored the points according to the response time (Figure 1). The points are densely concentrated in the Central region around the city of Henderson. The points become more sparse the further they are from Henderson, resulting in sparsely concentrated points in the far North and far South. Response times are shorter in the Central region and tend to be longer in the North and the South. 
 
-We were provided with four different Google Maps travel times. Ultimately we chose to use BG (best guess) estimates because it had the lowest bias (Table). This can be seen visually (Figure) because the interquartile range (the box) is the most centered at 0 for BG in comparison to the other estimates. 
+We were provided with four different Google Maps travel times. Ultimately we chose to use BG (best guess) estimates because it had the lowest bias (Table 1). This can be seen visually (Figure 2) because the interquartile range (the box) is the most centered at 0 for BG in comparison to the other estimates. 
 
 In order to simulate EMS calls with the given data, we had to determine a rule for which ambulance to dispatch from which station. First we use the availability matrix to detect overlapping calls with earlier dispatches. We then adjust each station’s available vehicles by subtracting those already assigned to conflicts. Then from the stations with vehicles still available, dispatch from the one offering the shortest estimated travel time to the call. 
 
@@ -119,6 +119,43 @@ load("./emsData.RData")
 # remove duplicated entries of the same call (5 duplicates)
 x <- x |>
   distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
+
+# for other visualizations
+x <- x |>
+  mutate(
+    # actual observed time
+    actual_time = as.numeric(difftime(DT.ARRIVE, DT.DISP, units = "secs")),
+
+    # pick the correct estimate from each provider
+    est_UA = case_when(
+      BASE.NAME == "Company 1" ~ eTT.UA.So,
+      BASE.NAME == "Company 9" ~ eTT.UA.Ce,
+      TRUE ~ NA_real_
+    ),
+    est_Pe = case_when(
+      BASE.NAME == "Company 1" ~ eTT.Pe.So,
+      BASE.NAME == "Company 9" ~ eTT.Pe.Ce,
+      TRUE ~ NA_real_
+    ),
+    est_Op = case_when(
+      BASE.NAME == "Company 1" ~ eTT.Op.So,
+      BASE.NAME == "Company 9" ~ eTT.Op.Ce,
+      TRUE ~ NA_real_
+    ),
+    est_BG = case_when(
+      BASE.NAME == "Company 1" ~ eTT.BG.So,
+      BASE.NAME == "Company 9" ~ eTT.BG.Ce,
+      TRUE ~ NA_real_
+    )
+  )
+
+act_est <- x |>
+  select(actual_time, est_UA, est_Pe, est_Op, est_BG, BASE.NAME) |>
+  pivot_longer(
+    cols = starts_with("est_"),
+    names_to = "Estimator",
+    values_to = "est_time"
+  )
 ```
 
 ```{r fig-1, fig.cap="EMS call location and response times across Vance County"}
@@ -175,7 +212,31 @@ plot_save
 ```
 
 ```{r fig-3, fig.cap="Comparison of different travel time estimators"}
+act_est <- act_est |>
+  mutate(error = actual_time - est_time)
 
+ggplot(act_est, aes(x = Estimator, y = error, fill = Estimator)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(
+    title = "Error Distribution by Estimator",
+    y = "Error (seconds, actual − estimated)",
+    x = "Estimator"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+metrics <- act_est |>
+  group_by(Estimator) |>
+  summarise(
+    MAE  = mean(abs(actual_time - est_time), na.rm = TRUE),
+    RMSE = sqrt(mean((actual_time - est_time)^2, na.rm = TRUE)),
+    Bias = mean(actual_time - est_time, na.rm = TRUE)
+  )
+
+metrics |>
+  kable(caption = "Metrics of different travel time estimators shows BG is optimal")
 ```
 
 ```{r dispatch-rule}
