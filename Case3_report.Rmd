@@ -33,6 +33,14 @@ Emergency medical service (EMS) response times can drastically impact patient ou
 
 To answer this question we examined a dataset with real EMS call data. Select information was withheld or changed, such as dates and addresses for HIPAA compliance. However for the purposes of our analysis those changes are not relevant. The data has information for each call and API pulled travel times from Google Maps. We were provided with four types of estimates from Google Maps (best guess, optimistic, pessimistic, and unadjusted) for each station including the two proposed Northern stations to each call.
 
+We started by exploring the distribution of calls throughout Vance County. We plotted call locations on a map of Vance County and colored the points according to the response time (Figure). The points are densely concentrated in the Central region around the city of Henderson. The points become more sparse the further they are from Henderson, resulting in sparsely concentrated points in the far North and far South. 
+
+We were provided with four different Google Maps travel times. Ultimately we chose to use BG (best guess) estimates because it had the lowest bias (Table). This can be seen visually (Figure) because the interquartile range (the box) is the most centered at 0 for BG in comparison to the other estimates. 
+
+In order to simulate EMS calls with the given data, we had to determine a rule for which ambulance to dispatch from which station. First we use the availability matrix to detect overlapping calls with earlier dispatches. We then adjust each station’s available vehicles by subtracting those already assigned to conflicts. Then from the stations with vehicles still available, dispatch from the one offering the shortest estimated travel time to the call. 
+
+Once we determined our dispatch rule, we were able to calculate estimated travel times for the calls according to the different scenarios. Looking at different intervals of estimated travel times, we can see that Scenario 3 appears to have the lowest (fastest) estimated travel times. This suggests that Scenario 3 may be the optimal choice. 
+
 # Model Rationale, Implementation, and Evaluation
 
 ## Rationale & Selection
@@ -108,7 +116,7 @@ x <- x |>
   distinct(VEH.GRID, DT.DISP, .keep_all = TRUE)
 ```
 
-```{r map-intial-eda}
+```{r fig-1, fig.cap="EMS call location and response times across Vance County"}
 
 library(dplyr)
 library(sf)
@@ -126,20 +134,6 @@ coords_df<- st_as_sf(x_modified, coords = c("REF.GPS.LON","REF.GPS.LAT"), crs = 
 
 
 road_df <- roads(state = "NC", county = "Vance", year = 2024, class = "sf")
-
-
-plot_save <- ggplot() +
-  geom_sf(data = vance_data, fill = NA, color = "black", linewidth = 0.5) + geom_sf(data = road_df, color = "grey80", linewidth = 0.2) +
-  geom_sf(data = coords_df, aes(color = DISPATCH.PRIORITY.NAME), size = 1.8) +
-  coord_sf(xlim = st_bbox(vance_data)[c("xmin","xmax")],
-           ylim = st_bbox(vance_data)[c("ymin","ymax")], expand = FALSE) +
-  labs(title= "Urgency of Vance County EMS Calls",color="Urgency Level")+
-  theme_minimal(base_size = 12) +
-  theme(panel.grid.major = element_blank(),
-        axis.title = element_blank(), axis.text = element_blank(), axis.ticks = element_blank())
-
-plot_save
-
 
 library(dplyr)
 library(sf)
@@ -176,7 +170,7 @@ plot_save
 
 ```
 
-```{r compare-ett}
+```{r fig-3, fig.cap="Comparison of different travel time estimators"}
 
 ```
 
@@ -269,14 +263,14 @@ counts <- plot_data |>
   summarise(N = n(), .groups = "drop")
 ```
 
-```{r fig-1, fig.cap="CAPTION"}
+```{r fig-4, fig.cap="Estimated travel times intervals by scenario"}
 counts$Scenario <- gsub("_ETT_DISPATCH", "", counts$Scenario)
 
 ggplot(counts, aes(x = DelayGroup, y = N, fill = Scenario)) +
   geom_col(position = "dodge") +
   scale_fill_viridis_d(option = "D", end = 0.9) +
-  labs(title = "Counts of Dispatch Delays by Scenario",
-       x = "Delay Interval", y = "Number of Calls",
+  labs(title = "Counts of Estimated Travel Time Intervals by Scenario",
+       x = "Estimated Travel Time", y = "Number of Calls",
        fill = "Scenario") +
   theme_minimal(base_size = 14) +
   theme(
@@ -352,18 +346,22 @@ model_lmm <- lme(
 )
 ```
 
-```{r}
+```{r fig-5, fig.cap="QQ plot for residuals roughly follows diagnol line"}
+
 # Residuals Q-Q plot
 qqnorm(residuals(model_lmm), main = "Residuals")
 qqline(residuals(model_lmm), col = "red")
 
+```
+
+```{r fig-6, fig.cap="QQ plot for random effects follows diagnol line"}
 # Random effects Q-Q plot
 re <- ranef(model_lmm)
 qqnorm(re[,1], main = "Random Effects")
 qqline(re[,1], col = "red")
 ```
 
-```{r}
+```{r fig-7, fig.cap="Residuals vs fitted values are roughly randomly scattered"}
 changed_df$fitted <- fitted(model_lmm)
 changed_df$resid  <- resid(model_lmm, type = "normalized")
 
@@ -386,10 +384,16 @@ p3 <- ggplot(changed_df, aes(x = region, y = resid)) +
        x = "Region", y = "Residuals") +
   theme_minimal()
 
-p1 
-p2
-p3
+p1
 
+```
+
+```{r fig-8, fig.cap="Boxplot of residuals by scenario shows variation across scenarios"}
+p2
+```
+
+```{r fig-9, fig.cap="Boxplots of residuals by region show variantion across regions"}
+p3
 ```
 
 ```{r}
