@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.1)  20 OCT 2025 15:07
+This is XeTeX, Version 3.141592653-2.6-0.999997 (TeX Live 2025) (preloaded format=xelatex 2025.9.1)  20 OCT 2025 15:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -989,8 +989,25 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 [3]
 File: Case3_report_files/figure-latex/map-intial-eda-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/map-intial-eda-1.pdf>
+File: Case3_report_files/figure-latex/map-intial-eda-2.pdf Graphic file (type pdf)
+<use Case3_report_files/figure-latex/map-intial-eda-2.pdf>
+
+Underfull \hbox (badness 10000) in paragraph at lines 164--165
+[]
+ []
+
 File: Case3_report_files/figure-latex/fig-1-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/fig-1-1.pdf>
+
+
+[4]
+Overfull \vbox (24.78497pt too high) has occurred while \output is active []
+
+
+
+[5]
+
+[6]
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
 (Font)              scaled to size 7.0pt on input line 176.
 LaTeX Font Info:    Font shape `TU/latinmodern-math.otf(1)/m/n' will be
@@ -1018,11 +1035,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 210--211
 
 
 
-[4]
-
-[5]
-
-[6]
+[7]
 File: Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-4-1.pdf>
 File: Case3_report_files/figure-latex/unnamed-chunk-4-2.pdf Graphic file (type pdf)
@@ -1041,11 +1054,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 212--213
 
 
 
-[7]
-
 [8]
 
 [9]
+
+[10]
 File: Case3_report_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use Case3_report_files/figure-latex/unnamed-chunk-6-1.pdf>
 File: Case3_report_files/figure-latex/unnamed-chunk-6-2.pdf Graphic file (type pdf)
@@ -1064,13 +1077,13 @@ Underfull \hbox (badness 10000) in paragraph at lines 258--259
 
 
 
-[10]
-
 [11]
 
 [12]
 
-[13] (./Case3_report.aux)
+[13]
+
+[14] (./Case3_report.aux)
  ***********
 LaTeX2e <2025-06-01> patch level 1
 L3 programming layer <2025-08-13>
@@ -1080,12 +1093,12 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 20371 strings out of 470396
- 371769 string characters out of 5489208
+ 20380 strings out of 470396
+ 372269 string characters out of 5489208
  955053 words of memory out of 5000000
- 48405 multiletter control sequences out of 15000+600000
+ 48413 multiletter control sequences out of 15000+600000
  633334 words of font info for 88 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 90i,9n,114p,1009b,349s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,9n,114p,1009b,377s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Case3_report.pdf (13 pages).
+Output written on Case3_report.pdf (14 pages).

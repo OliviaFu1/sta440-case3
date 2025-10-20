@@ -141,6 +141,40 @@ plot_save <- ggplot() +
 
 plot_save
 
+
+library(dplyr)
+library(sf)
+library(ggplot2)
+library(tigris)
+
+options(tigris_use_cache = TRUE)
+
+vance_data <- counties(state = "NC", year = 2024, class = "sf") |> filter(GEOID == "37181")
+
+x_modified <- x |>
+  mutate(obsTTmodified = as.numeric(observedTT, units = "mins"))
+
+coords_df<- st_as_sf(x_modified, coords = c("REF.GPS.LON","REF.GPS.LAT"), crs = 4326, remove = FALSE) |> st_transform(st_crs(vance_data))
+
+
+road_df <- roads(state = "NC", county = "Vance", year = 2024, class = "sf")
+
+
+plot_save <- ggplot() +
+  geom_sf(data = vance_data, fill = NA, color = "black", linewidth = 0.5) + geom_sf(data = road_df, color = "grey80", linewidth = 0.2) +
+  geom_sf(data = coords_df, aes(color = obsTTmodified), size = 1.8) +
+  scale_color_viridis_c(name = "Observed EMS Travel Time (minutes)", na.value = "grey80") +
+  coord_sf(xlim = st_bbox(vance_data)[c("xmin","xmax")],
+           ylim = st_bbox(vance_data)[c("ymin","ymax")], expand = FALSE) +
+  labs(title= "Observed Travel Times of Vance County EMS in minutes")+
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.major = element_blank(),
+        axis.title = element_blank(), axis.text = element_blank(), axis.ticks = element_blank())
+
+plot_save
+
+
+
 ```
 
 ```{r compare-ett}
