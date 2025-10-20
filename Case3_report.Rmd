@@ -88,8 +88,6 @@ To quantify the magnitude of change in estimated travel time for calls that were
 
 When evaluating results by region (Table 6), we observed substantial variation across regions. In the Central and South regions, all scenarios result in positive estimated marginal means, indicating longer travel times compared to the baseline. This is expected, as the scenarios reallocate an ambulance from the Central or South region to the North. In contrast, the North region experiences substantial improvements, with Scenario 3 achieving the largest reduction in estimated travel time (-477.7 seconds, p = 0). Scenario 1 yields a similar reduction, while Scenarios 2 and 4 perform less favorably, suggesting that moving an ambulance to the near north site is more effective than moving it farther away. These differences in fitted values across regions and scenarios are illustrated in Figure 9.
 
-we can see further evidence of the fact that there is a region-by-region difference in fitted estimated travel times for each scenario based on our LMM. General trends for the differences in ETT are also visible, such as the drastically lower fitted ETTs for the North region when compared to the Central and South regions.
-
 Overall, Scenario 3 provides the greatest improvement in the region it is intended to benefit (North), but its benefits at the county level are limited by negative impacts on the Central and South regions and the relatively small proportion of calls that actually experience a change.
 
 # Limitations and Future Directions
