@@ -283,4 +283,20 @@ summary(emm, infer = TRUE)
 
 emm_reg <- emmeans(model_lmm, ~ Scenario | region)
 summary(emm_reg, infer = TRUE)
+
 ```
+
+```{r}
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=DISPATCH.PRIORITY.NAME))+geom_point()+facet_wrap("Scenario")
+
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=DISPATCH.PRIORITY.NAME))+geom_point()+facet_wrap("region")
+
+
+# effects by category
+
+ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region")
+```
+
+
+
+
