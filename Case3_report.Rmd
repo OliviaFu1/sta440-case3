@@ -405,9 +405,9 @@ summary(emm_reg, infer = TRUE) |>
 ```
 
 ```{r}
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=DISPATCH.PRIORITY.NAME))+geom_point()+facet_wrap("Scenario")
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=Scenario))+geom_point()
 
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=DISPATCH.PRIORITY.NAME))+geom_point()+facet_wrap("region")
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=region))+geom_point()
 
 
 # effects by category
