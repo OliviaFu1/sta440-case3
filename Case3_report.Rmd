@@ -279,10 +279,12 @@ p1 + p2 + p3
 
 ```{r}
 emm <- emmeans(model_lmm, ~ Scenario)
-summary(emm, infer = TRUE)
+summary(emm, infer = TRUE) |>
+  kable()
 
 emm_reg <- emmeans(model_lmm, ~ Scenario | region)
-summary(emm_reg, infer = TRUE)
+summary(emm_reg, infer = TRUE) |>
+  kable()
 
 ```
 
@@ -298,7 +300,3 @@ ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+geom_boxplot()+geom_j
 
 
 ```
-
-
-
-
