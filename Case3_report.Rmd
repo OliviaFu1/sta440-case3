@@ -374,19 +374,20 @@ summary(emm_reg, infer = TRUE) |>
 ```
 
 ```{r}
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=Scenario))+geom_point()+geom_line(method="lm")
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=Scenario))+geom_point()+geom_smooth(method="lm",se=FALSE)
 
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=region))+geom_point()
+ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=region))+geom_point()+geom_smooth(method="lm",se=FALSE)
 
 
 # effects by category
 
-ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region")
+ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+
+  geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region")
 
 emmeans_df<- as.data.frame(emm)
-
-
 ggplot(emmeans_df,aes(x=Scenario,y=emmean,color=Scenario))+
-  geom_point(size=3)+geom_errorbar(aes(ymin=lower.CL, ymax=upper.CL),width=0.2)+labs(x="Scenario",y="EMM")+theme_minimal()
+geom_point(size=3)+
+geom_errorbar(aes(ymin=lower.CL, ymax=upper.CL),width=0.2)+
+labs(x="Scenario",y="EMM")+theme_minimal()
 
 ```
