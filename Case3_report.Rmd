@@ -69,9 +69,14 @@ We also examined the Q-Q plots to assess the normality assumption (Figure 5). Fo
 
 # Results
 
-To interpret the result of our model we ran emmeans() in R so that we could calculate the estimated marginal means across the proposed scenarios using our linear mixed model. From the emmeans calculation, we found that while the marginal means for all the scenarios were statistically significant (a sign that our model may be working as intended for analysis purposes), S3 had the lowest emmean value. In this case that means S3 had the lowest marginal mean estimated travel time (ETT) when switched from the baseline of S0. Lowest is ideal in this case because lower travel times are faster times.
+From the logistic regression results (Table 2), we estimated the probability that a call’s estimated travel time would change relative to the baseline for each scenario. As shown in Table 3, 25.4% of calls exhibited a change under Scenario 1, 23.6% under Scenario 2, 10.8% under Scenario 3, and 9.3% under Scenario 4. This indicates that the majority of calls are unaffected by ambulance redistribution across all scenarios, which is an important consideration when evaluating the overall effectiveness and operational impact of each proposed strategy.
 
-When evaluating across regions, however, we found slightly varying results. While all scenarios provided statistically significant marginal mean values for all regions, we found that f when evaluated individually, the Central and the North regions saw the lowest marginal mean estimated travel time with S1 compared to S0. However, for the South region, the lowest marginal mean ETT remained as S3, which is as it was for the overall analysis.
+To quantify the magnitude of change in estimated travel time for calls that were affected, we computed estimated marginal means using the emmeans() function in R. As shown in Table 5, Scenario 3 has the lowest estimated marginal mean of –41.07 seconds, indicating that it reduces estimated travel time by approximately 41 seconds on average compared to the current setup. However, this effect is not statistically significant at the 0.05 level (p = 0.1138). Thus, while Scenario 3 appears to perform best among the four proposals, the overall improvement is not strong enough to conclude a statistically significant benefit at the county-wide level.
+
+When evaluating results by region (Table 6), we observed substantial variation across regions. In the Central and South regions, all scenarios result in positive estimated marginal means, indicating longer travel times compared to the baseline. This is expected, as the scenarios reallocate an ambulance from the Central or South region to the North. In contrast, the North region experiences substantial improvements, with Scenario 3 achieving the largest reduction in estimated travel time (-477.7 seconds, p = 0). Scenario 1 yields a similar reduction, while Scenarios 2 and 4 perform less favorably, suggesting that moving an ambulance to the near north site is more effective than moving it farther away.
+
+Overall, Scenario 3 provides the greatest improvement in the region it is intended to benefit (North), but its benefits at the county level are limited by negative impacts on the Central and South regions and the relatively small proportion of calls that actually experience a change.
+
 
 # Limitations and Conclusion
 
@@ -398,11 +403,11 @@ p3
 ```{r}
 emm <- emmeans(model_lmm, ~ Scenario)
 summary(emm, infer = TRUE) |>
-  kable()
+  kable(caption = "Estimated marginal means by scenario")
 
 emm_reg <- emmeans(model_lmm, ~ Scenario | region)
 summary(emm_reg, infer = TRUE) |>
-  kable()
+  kable(caption = "Estimated marginal means by scenario within each region")
 
 ```
 
