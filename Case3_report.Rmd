@@ -15,19 +15,68 @@ editor: visual
 
 # Background and Motivation
 
+Emergency medical service (EMS) response times can drastically impact patient outcomes. Vance County, North Carolina is a growing county that is interested in evaluating their current EMS ambulance placements. The county has three major regions, the North, Central, and the South. The population is mostly concentrated in the city of Henderson, located in the Central region. There are currently 2 EMS stations, 1 in the South, and 1 in Central. The southern station has 1 ambulance, and the central station has 3. The North does not currently have a station. Thus Vance County is interested in exploring if moving an ambulance to the North would be beneficial. There are two potential locations for an ambulance to be stationed in the North: the Near North and the Far North. We were given five scenarios for ambulance placement:
+
+Scenario 0: 1 in South, 3 in Central (Current Placement)
+Scenario 1: 0 in South, 3 in Central, 1 in Near North
+Scenario 2: 0 in South, 3 in Central, 1 in Far North
+Scenario 3: 1 in South, 2 in Central, 1 in Near North
+Scenario 4: 1 in South, 2 in Central, 1 in Far North
+
+**Research question:** Where should the ambulances be stationed to best serve Vance county?
+
 # Data and Exploratory Analysis
+
+To answer this question we examined a dataset with real EMS call data. Select information was withheld or changed, such as dates and addresses for HIPAA compliance. However for the purposes of our analysis those changes are not relevant. The data has information for each call and API pulled travel times from Google Maps. We were provided with four types of estimates from Google Maps (best guess, optimistic, pessimistic, and unadjusted) for each station including the two proposed Northern stations to each call.
+
 
 # Model Rationale, Implementation, and Evaluation
 
 ## Rationale & Selection
 
+We selected a two-stage modeling approach: a logistic regression to model whether estimated travel time changes from the baseline scenario, followed by a linear mixed-effects model to quantify how travel time changes when it does differ. This approach is justified both by the data structure and the nature of our dispatch system. In our simulation, many calls have identical estimated travel times across all four proposed scenarios and the baseline (S0). For example, calls located in the central often have the same optimal dispatch station under all scenarios, resulting in no variation. Including these repeated values directly in a continuous-response model would violate normality and constant variance assumptions due to the discrete mass at zero differences.
+
+To address this, our first model is a logistic regression predicting whether estimated travel time differs from baseline (change vs. no change). This allows us to estimate the probability that each scenario leads to a change in dispatch outcome.
+
+Conditional on a change occurring, we then model the magnitude of that change using a linear mixed-effects model. The response variable is the difference in estimated travel time relative to baseline. We include a Scenario*Region interaction to assess both overall scenario effects and whether their impacts differ across geographic regions. Because each call contributes multiple observations (one per scenario), there is clear grouping in the data. Therefore, we include a random intercept at the call level to account for within-call correlation. 
+
+Exploratory residual analysis revealed heteroskedasticity across regions, so we incorporate region-specific residual variances using a varIdent variance structure. Attempts to also model variance by scenario resulted in singular fits, likely due to limited variability or nesting of scenarios within call-level random effects. A competing GLS model without random effects and with Scenario*Region variance structure had substantially worse AIC/BIC values (Table 1), which supports that accounting for call-level correlation and regional heterogeneity provides a better fit.
+
 ## Implementation
+
+For the logistic model, we created a binary indicator of whether estimated travel time changed from baseline and fit a generalized linear model using the glm() function in R with a binomial family and scenario as the predictor.
+
+For the linear mixed-effects stage, we retained only rows where travel time differed from baseline and modeled the continuous difference using the lme() function in the nlme package. We specified a random intercept for each call (random = ~1 | row_val) and allowed the residual variance to differ by region using weights = varIdent(form = ~1 | region).
+
 
 ## Evaluation
 
+To evaluate whether the model provided a good fit for the data, we examined multiple residual plots (Figure 4). The residuals are normalized to account for the model’s variance structure. In the residuals vs. fitted values plot, the residuals are randomly scattered around zero without clear patterns or clustering, which suggests that the model’s mean structure is appropriate and that the variance has been reasonably modeled. The horizontal layering is expected due to the discrete set of fitted values from the scenario–region combinations.
+
+Residuals plotted by scenario suggest some differences in spread, particularly for S1/S2 relative to S3/S4. While this indicates possible scenario-level heteroskedasticity, the model could not support this additional structure without convergence failures. The residuals by region plot shows some remaining variance differences across regions, but the variation is improved compared to the model without variance adjustment.
+
+We also examined the Q-Q plots to assess the normality assumption (Figure 5). For the random effects, the points closely align the diagonal line with only minor deviations in the lower tails, suggesting the normality assumption for random effects is reasonable. For the residuals, the Q-Q plot shows deviations in the tails, which may be due to repeated identical travel time estimates for certain scenarios or the discrete nature of the response variable. The central portion aligns closely with the theoretical line, indicating that the normality assumption is approximately satisfied for most observations.
+
+
 # Results
 
+To interpret the result of our model we ran emmeans() in R so that we could calculate the estimated marginal means across the proposed scenarios using our linear mixed model. From the emmeans calculation, we found that while the marginal means for all the scenarios were statistically significant (a sign that our model may be working as intended for analysis purposes), S3 had the lowest emmean value. In this case that means S3 had the lowest marginal mean estimated travel time (ETT) when switched from the baseline of S0. Lowest is ideal in this case because lower travel times are faster times. 
+
+When evaluating across regions, however, we found slightly varying results. While all scenarios provided statistically significant marginal mean values for all regions, we found that f when evaluated individually, the Central and the North regions saw the lowest marginal mean estimated travel time with S1 compared to S0. However, for the South region, the lowest marginal mean ETT remained as S3, which is as it was for the overall analysis.  
+
 # Limitations and Conclusion
+
+There are several shortcomings of our analysis, some of which are due to model flaws while others are due to data limitations. First of all, our model stratified the random residual vs. fitted scattering, but there is some slight ambiguity in our residuals plotted by scenario that leaves a possibility of scenario-level heteroskedasticity. While our model has reasonably met the normally distributed residuals assumption via the QQ plot, there is still some deviation in the tail ends of the plot which could point to model weakness in terms of normality. 
+
+Additionally, our model does not account for certain outside factors that were omitted from the provided data and could not be extracted without heavy assumption. Factors like traffic, rush hours, and road closures which very well could affect ambulance response times are not accounted for by our model or analysis. Additionally, variance in ambulance response times dependent on the month/date of the year is very possible yet not a feature of our model. Furthermore, EMT and ambulance staffing patterns which is an additional factor that could affect an ambulance’s ability to report to a call even if the vehicle itself is available is something that could not be assumed from the provided data. 
+
+Other shortcomings of our analysis beyond unaccounted factors include ETT input limitations, variance modeling, and dispatch rule simplicity. The estimated travel time (ETT) inputs are based on single best-guess estimates generated from Google Maps data, so this does not take nuances in travel time due to aforementioned factors into consideration. Our variance modeling was only structured around the regional differences for scenario reallocation, even though other factors like call urgency (emergency vs. non emergency) could affect variability. Lastly, our dispatch rule is sufficient, yet simplistic and lacks consideration of nuances and additional factors (as mentioned above). While dispatching based on a simple queueing system model was ideal for analysis, this is not indicative of real-life ambulance dispatch scenarios. Real-life dispatching can be wildly unpredictable, if not dependent on many other factors like road conditions and staffing patterns. 
+
+To improve our model for the future, we might consider fitting additional models that account for additional factors of complexity if provided, such as road conditions, staffing patterns, and traffic. We would ideally also incorporate the given urgency of calls (emergency vs non-emergency) to update our dispatch rule. We could also add contrasts to our estimated marginal mean travel time calculations. This would provide a more informative model and analysis that not only accounts for optimal ambulance reallocation by region, but also by how dire the call was. 
+
+
+Based on the above analyses and our modeling results, we conclude that the overall optimal reallocation resulting in a reduction of ambulance response time is Scenario 3. Scenario 3 is to move an ambulance from the Central station to the Near North station in Vance County. This reallocation results in a % reduction in marginal mean estimated travel times from the baseline of Scenario 0 (the current ambulance allocation in Vance County). We see the lowest overall marginal mean estimated travel times for Scenario 3, though, as discussed above, the optimal Scenario for Central and North stations evaluated individually would be Scenario 1. With this change in ambulance allocation to Scenario 3, Vance County can expect to see a decrease in marginal mean ETT of ___ min, which is a substantial amount when discussing the urgency of emergency response situations whose outcomes are dependent on minutes, perhaps even seconds.
+
 
 \pagebreak
 
@@ -274,7 +323,10 @@ p3 <- ggplot(changed_df, aes(x = region, y = resid)) +
        x = "Region", y = "Residuals") +
   theme_minimal()
 
-p1 + p2 + p3
+p1 
+p2
+p3
+
 ```
 
 ```{r}
