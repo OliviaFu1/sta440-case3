@@ -33,7 +33,7 @@ Emergency medical service (EMS) response times can drastically impact patient ou
 
 To answer this question we examined a dataset with real EMS call data. Select information was withheld or changed, such as dates and addresses for HIPAA compliance. However for the purposes of our analysis those changes are not relevant. The data has information for each call and API pulled travel times from Google Maps. We were provided with four types of estimates from Google Maps (best guess, optimistic, pessimistic, and unadjusted) for each station including the two proposed Northern stations to each call.
 
-We started by exploring the distribution of calls throughout Vance County. We plotted call locations on a map of Vance County and colored the points according to the response time (Figure). The points are densely concentrated in the Central region around the city of Henderson. The points become more sparse the further they are from Henderson, resulting in sparsely concentrated points in the far North and far South. 
+We started by exploring the distribution of calls throughout Vance County. We plotted call locations on a map of Vance County and colored the points according to the response time (Figure). The points are densely concentrated in the Central region around the city of Henderson. The points become more sparse the further they are from Henderson, resulting in sparsely concentrated points in the far North and far South. Response times are shorter in the Central region and tend to be longer in the North and the South. 
 
 We were provided with four different Google Maps travel times. Ultimately we chose to use BG (best guess) estimates because it had the lowest bias (Table). This can be seen visually (Figure) because the interquartile range (the box) is the most centered at 0 for BG in comparison to the other estimates. 
 
@@ -325,7 +325,7 @@ model_logit <- glm(change_flag ~ Scenario,
 kable(
   tidy(model_logit, conf.int = TRUE, conf.level = 0.95),
   digits = 3,
-  caption = "CAPTION"
+  caption = "Model output for logistic model of scenarios"
 ) |> 
   kable_styling(latex_options = "HOLD_position")
 
@@ -335,7 +335,7 @@ new_data <- data.frame(
 
 new_data$predicted_prob <- predict(model_logit, newdata = new_data, type = "response")
 
-kable(new_data, digits = 3, caption = "CAPTION") |> 
+kable(new_data, digits = 3, caption = "Predicted probabilities of differences from baseline") |> 
   kable_styling(latex_options = "HOLD_position")
 ```
 
@@ -411,21 +411,14 @@ summary(emm_reg, infer = TRUE) |>
 
 ```
 
-```{r}
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=Scenario))+geom_point()+geom_smooth(method="lm",se=FALSE)
-
-ggplot(changed_df,aes(x=fitted,y=ETT_sec,color=region))+geom_point()+geom_smooth(method="lm",se=FALSE)
-
+```{r fig-10, fig.cap="Boxplots of fitted values by region and scenario show scenario variations"}
 
 # effects by category
 
 ggplot(changed_df,aes(x=Scenario,y=fitted,color=Scenario))+
-  geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region")
-
-emmeans_df<- as.data.frame(emm)
-ggplot(emmeans_df,aes(x=Scenario,y=emmean,color=Scenario))+
-geom_point(size=3)+
-geom_errorbar(aes(ymin=lower.CL, ymax=upper.CL),width=0.2)+
-labs(x="Scenario",y="EMM")+theme_minimal()
+  geom_boxplot()+geom_jitter(aes(y=fitted),alpha=0.3)+facet_wrap("region") +
+  theme_minimal() +
+  labs(title = "Fitted Values by Region and Scenario",
+       y = "Fitted Value")
 
 ```
