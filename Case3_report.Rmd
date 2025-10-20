@@ -117,8 +117,6 @@ x <- x |>
 ```
 
 ```{r fig-1, fig.cap="EMS call location and response times across Vance County"}
-
-<<<<<<< HEAD
 library(dplyr)
 library(sf)
 library(ggplot2)
