@@ -33,7 +33,7 @@ To address this, county officials are considering relocating one of the existing
 
 # Data and Exploratory Analysis
 
-To address this research question, we examined a dataset with real EMS call records from Vance County. Select identifying information, such as dates and addresses, was modified or removed to comply with HIPAA regulations; however, for the purposes of our analysis those changes are not relevant. The dataset includes key operational details for each call, such as location, emergency level, dispatch time, arrival time, etc. For each call, estimated travel times were obtained using the Google Maps API for all existing stations and the two proposed Northern station locations. Google Maps provided four types of travel time estimates for each call–station pair: best-guess, optimistic, pessimistic, and unadjusted. These estimates enabled us to compare response times across the five proposed ambulance placement scenarios.
+To address this research question, we examined a dataset with real EMS call records from Vance County. Select identifying information, such as dates and addresses, was modified or removed to comply with HIPAA regulations; however, for the purposes of our analysis those changes are not relevant. The dataset includes key operational details for each call, such as location, emergency level, dispatch time, arrival time, etc. For each call, estimated travel times were obtained using the Google Maps API for all existing stations and the two proposed Northern station locations. Google Maps provided four types of travel time estimates for each call–station pair: best-guess, optimistic, pessimistic, and unadjusted. These estimates enabled us to compare response times across the four proposed ambulance placement scenarios.
 
 We started by examining the spatial distribution of EMS calls across Vance County. We mapped call locations across Vance County and colored them by response time (Figure 1). Calls are densely concentrated in the Central region around the city of Henderson and become increasingly sparse with distance, particularly in the far North and South. Response times are shortest in the Central region and tend to be longer in the North and South. The vast majority of calls have response times under 10 minutes, with nearly all under 20 minutes.
 
@@ -53,7 +53,7 @@ To address this, our first model is a logistic regression predicting whether est
 
 Conditional on a change occurring, we then model the magnitude of that change using a linear mixed-effects model. The response variable is the difference in estimated travel time relative to baseline. We include a `Scenario*Region` interaction to assess both overall scenario effects and whether their impacts differ across geographic regions. Because each call contributes multiple observations (one per scenario), there is clear grouping in the data. Therefore, we include a random intercept at the call level to account for within-call correlation.
 
-Exploratory residual analysis revealed heteroskedasticity across regions, so we incorporate region-specific residual variances using a `varIdent` variance structure. Attempts to also model variance by scenario resulted in singular fits, likely due to limited variability or nesting of scenarios within call-level random effects. A competing GLS model without random effects and with `Scenario*Region` variance structure had substantially worse AIC/BIC values (Table 4), which supports that accounting for call-level correlation and regional heterogeneity provides a better fit.
+Exploratory residual analysis revealed heteroskedasticity across regions, so we incorporate region-specific residual variances using a `varIdent` variance structure. Attempts to also model variance by scenario resulted in singular fits, likely due to limited variability or nesting of scenarios within call-level random effects. A competing GLS model without random effects and with `Scenario*Region` variance structure had substantially worse AIC/BIC values (Table 2), which supports that accounting for call-level correlation and regional heterogeneity provides a better fit.
 
 **Final model specifications:**
 
@@ -74,15 +74,15 @@ For the linear mixed-effects stage, we retained only rows where travel time diff
 
 ## Evaluation
 
-To evaluate whether the model provided a good fit for the data, we examined multiple residual plots. The residuals are normalized to account for the model’s variance structure. In the residuals vs. fitted values plot (Figure 6), the residuals are randomly scattered around zero without clear patterns or clustering, which suggests that the model’s mean structure is appropriate and that the variance has been reasonably modeled. The horizontal layering is expected due to the discrete set of fitted values from the scenario–region combinations.
+To evaluate whether the model provided a good fit for the data, we examined multiple residual plots. The residuals are normalized to account for the model’s variance structure. In the residuals vs. fitted values plot (Figure 4), the residuals are randomly scattered around zero without clear patterns or clustering, which suggests that the model’s mean structure is appropriate and that the variance has been reasonably modeled. The horizontal layering is expected due to the discrete set of fitted values from the scenario–region combinations.
 
-Residuals plotted by scenario (Figure 7) suggest some differences in spread, particularly for S1/S2 relative to S3/S4. While this indicates possible scenario-level heteroskedasticity, the model could not support this additional structure without convergence failures. The residuals by region plot (Figure 8) shows some remaining variance differences across regions, but the variation is improved compared to the model without variance adjustment.
+Residuals plotted by scenario (Figure 5) suggest some differences in spread, particularly for S1/S2 relative to S3/S4. While this indicates possible scenario-level heteroskedasticity, the model could not support this additional structure without convergence failures. The residuals by region plot (Figure 6) shows some remaining variance differences across regions, but the variation is improved compared to the model without variance adjustment.
 
-We also examined the Q-Q plots to assess the normality assumption. For the random effects (Figure 5), the points closely align the diagonal line with only minor deviations in the lower tails, suggesting the normality assumption for random effects is reasonable. For the residuals (Figure 4), the Q-Q plot shows deviations in the tails, which may be due to repeated identical travel time estimates for certain scenarios or the discrete nature of the response variable. The central portion aligns closely with the theoretical line, indicating that the normality assumption is approximately satisfied for most observations.
+We also examined the Q-Q plots to assess the normality assumption. For the random effects (Figure 7), the points closely align the diagonal line with only minor deviations in the lower tails, suggesting the normality assumption for random effects is reasonable. For the residuals (Figure 8), the Q-Q plot shows deviations in the tails, which may be due to repeated identical travel time estimates for certain scenarios or the discrete nature of the response variable. The central portion aligns closely with the theoretical line, indicating that the normality assumption is approximately satisfied for most observations.
 
 # Results
 
-From the logistic regression results (Table 2), we estimated the probability that a call’s estimated travel time would change relative to the baseline for each scenario. As shown in Table 3, 25.4% of calls exhibited a change under Scenario 1, 23.6% under Scenario 2, 10.8% under Scenario 3, and 9.3% under Scenario 4. This indicates that the majority of calls are unaffected by ambulance redistribution across all scenarios, which is an important consideration when evaluating the overall effectiveness and operational impact of each proposed strategy.
+From the logistic regression results (Table 3), we estimated the probability that a call’s estimated travel time would change relative to the baseline for each scenario. As shown in Table 4, 25.4% of calls exhibited a change under Scenario 1, 23.6% under Scenario 2, 10.8% under Scenario 3, and 9.3% under Scenario 4. This indicates that the majority of calls are unaffected by ambulance redistribution across all scenarios, which is an important consideration when evaluating the overall effectiveness and operational impact of each proposed strategy.
 
 To quantify the magnitude of change in estimated travel time for calls that were affected, we computed estimated marginal means using the `emmeans()` function in R. As shown in Table 5, Scenario 3 has the lowest estimated marginal mean of –41.07 seconds, indicating that it reduces estimated travel time by approximately 41 seconds on average compared to the current setup. However, this effect is not statistically significant at the 0.05 level (p = 0.1138). Thus, while Scenario 3 appears to perform best among the four proposals, the overall improvement is not strong enough to conclude a statistically significant benefit at the county-wide level.
 
@@ -92,7 +92,7 @@ Overall, Scenario 3 provides the greatest improvement in the region it is intend
 
 # Limitations and Future Directions
 
-Our analysis has several limitations arising from both modeling assumptions and data constraints. First, the residuals grouped by scenario (Figure 7) show slight differences in spread, suggesting potential scenario-level heteroskedasticity not fully captured by our variance structure. Additionally, although the Q-Q plots (Figures 4 and 5) show that residuals generally follow a normal distribution, tail deviations indicate minor violations of the normality assumption. These deviations may result from the discrete nature of travel time differences and repeated identical values across scenarios.
+Our analysis has several limitations arising from both modeling assumptions and data constraints. First, the residuals grouped by scenario (Figure 5) show slight differences in spread, suggesting potential scenario-level heteroskedasticity not fully captured by our variance structure. Additionally, although the Q-Q plots (Figures 7 and 8) show that residuals generally follow a normal distribution, tail deviations indicate minor violations of the normality assumption. These deviations may result from the discrete nature of travel time differences and repeated identical values across scenarios.
 
 The model also does not incorporate external factors that influence real-world EMS response times, because these were either unavailable in the dataset or could not be incorporated without strong assumptions. These include traffic conditions, rush-hour patterns, road closures, seasonal effects, and staffing availability. Without these factors, our estimates likely underestimate the true variability in response times.
 
@@ -401,21 +401,6 @@ model_df <- model_df |>
 model_logit <- glm(change_flag ~ Scenario,
                    data = model_df, 
                    family = binomial)
-kable(
-  tidy(model_logit, conf.int = TRUE, conf.level = 0.95),
-  digits = 3,
-  caption = "Logistic regression results showing the log-odds of travel time differing from the baseline across scenarios."
-) |> 
-  kable_styling(latex_options = "HOLD_position")
-
-new_data <- data.frame(
-  Scenario = c("S1", "S2", "S3", "S4")
-)
-
-new_data$predicted_prob <- predict(model_logit, newdata = new_data, type = "response")
-
-kable(new_data, digits = 3, caption = "Predicted probabilities of travel time changes from the logistic model. Scenario 1 and Scenario 2 affect approximately one in four calls, while Scenarios 3 and 4 affect fewer than 11 percent.") |> 
-  kable_styling(latex_options = "HOLD_position")
 ```
 
 ```{r lmm}
@@ -454,54 +439,64 @@ kable(anova_res,
   kable_styling(latex_options = "HOLD_position")
 ```
 
-```{r fig-4, fig.cap="Q-Q plot of normalized residuals for the linear mixed-effects model. Residuals roughly follow the theoretical normal line, with tail deviations indicating minor departures from normality."}
+```{r}
+kable(
+  tidy(model_logit, conf.int = TRUE, conf.level = 0.95),
+  digits = 3,
+  caption = "Logistic regression results showing the log-odds of travel time differing from the baseline across scenarios."
+) |> 
+  kable_styling(latex_options = "HOLD_position")
 
-# Residuals Q-Q plot
-qqnorm(residuals(model_lmm), main = "Residuals")
-qqline(residuals(model_lmm), col = "red")
+new_data <- data.frame(
+  Scenario = c("S1", "S2", "S3", "S4")
+)
 
+new_data$predicted_prob <- predict(model_logit, newdata = new_data, type = "response")
+
+kable(new_data, digits = 3, caption = "Predicted probabilities of travel time changes from the logistic model. Scenario 1 and Scenario 2 affect approximately one in four calls, while Scenarios 3 and 4 affect fewer than 11 percent.") |> 
+  kable_styling(latex_options = "HOLD_position")
 ```
 
-```{r fig-5, fig.cap="Q-Q plot of random effects showing close alignment with the theoretical normal distribution, indicating that the call-level random intercept is appropriately modele."}
-# Random effects Q-Q plot
-re <- ranef(model_lmm)
-qqnorm(re[,1], main = "Random Effects")
-qqline(re[,1], col = "red")
-```
-
-```{r fig-6, fig.cap="Residuals vs. fitted values showing random scatter around zero, suggesting the model adequately captures the mean structure and that variance has been reasonably model."}
+```{r fig-4, fig.cap="Residuals vs. fitted values showing random scatter around zero, suggesting the model adequately captures the mean structure and that variance has been reasonably model."}
 changed_df$fitted <- fitted(model_lmm)
 changed_df$resid  <- resid(model_lmm, type = "normalized")
 
-p1 <- ggplot(changed_df, aes(x = fitted, y = resid)) +
+ggplot(changed_df, aes(x = fitted, y = resid)) +
   geom_point(alpha = 0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   labs(title = "Residuals vs Fitted Values",
        x = "Fitted values",
        y = "Residuals") +
   theme_minimal()
+```
 
-p2 <- ggplot(changed_df, aes(x = Scenario, y = resid)) +
+```{r fig-5, fig.cap="Boxplot of residuals by scenario. Differences in spread suggest possible scenario-level heteroskedasticity that could not be fully modeled due to data constraints."}
+ggplot(changed_df, aes(x = Scenario, y = resid)) +
   geom_boxplot(alpha = 0.5) +
   theme_minimal() +
   labs(y = "Residuals", x = "Scenario", title = "Residuals by Scenario")
+```
 
-p3 <- ggplot(changed_df, aes(x = region, y = resid)) +
+```{r fig-6, fig.cap="Boxplot of residuals by region. Regional variation is reduced compared to models without variance structure but some heteroskedasticity remains, supporting the use of region-specific variance modeling."}
+ggplot(changed_df, aes(x = region, y = resid)) +
   geom_boxplot(alpha = 0.5) +
   labs(title = "Residuals by Region",
        x = "Region", y = "Residuals") +
   theme_minimal()
-
-p1
-
 ```
 
-```{r fig-7, fig.cap="Boxplot of residuals by scenario. Differences in spread suggest possible scenario-level heteroskedasticity that could not be fully modeled due to data constraints."}
-p2
+```{r fig-7, fig.cap="Q-Q plot of random effects showing close alignment with the theoretical normal distribution, indicating that the call-level random intercept is appropriately modele."}
+# Random effects Q-Q plot
+re <- ranef(model_lmm)
+qqnorm(re[,1], main = "Random Effects")
+qqline(re[,1], col = "red")
 ```
 
-```{r fig-8, fig.cap="Boxplot of residuals by region. Regional variation is reduced compared to models without variance structure but some heteroskedasticity remains, supporting the use of region-specific variance modeling."}
-p3
+```{r fig-8, fig.cap="Q-Q plot of normalized residuals for the linear mixed-effects model. Residuals roughly follow the theoretical normal line, with tail deviations indicating minor departures from normality."}
+
+# Residuals Q-Q plot
+qqnorm(residuals(model_lmm), main = "Residuals")
+qqline(residuals(model_lmm), col = "red")
 ```
 
 ```{r}
